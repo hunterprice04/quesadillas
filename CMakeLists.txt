@@ -4,7 +4,7 @@ PROJECT(Quesadillas)
 
 SET(CMAKE_CXX_STANDARD 11)
 
-ADD_SUBDIRECTORY("resources/pbnj")
+ADD_SUBDIRECTORY("resources/rasty")
 
 ADD_SUBDIRECTORY("resources/pistache")
 
@@ -14,7 +14,7 @@ FILE(GLOB SOURCES "src/*.cpp")
 
 ADD_EXECUTABLE(server ${SOURCES})
 
-TARGET_LINK_LIBRARIES(server pbnj pistache) 
+TARGET_LINK_LIBRARIES(server rasty pistache) 
 
 # Add extra options
 option(ENABLE_MINIFY "Enables JS minification" OFF)
