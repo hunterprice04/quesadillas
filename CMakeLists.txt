@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 
-PROJECT(Enchiladas)
+PROJECT(Quesadillas)
 
 SET(CMAKE_CXX_STANDARD 11)
 
@@ -19,17 +19,17 @@ TARGET_LINK_LIBRARIES(server pbnj pistache)
 # Add extra options
 option(ENABLE_MINIFY "Enables JS minification" OFF)
 
-# Copy the index.html code whenever enchiladas gets built
+# Copy the index.html code whenever quesadillas gets built
 ADD_CUSTOM_COMMAND(TARGET server PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_SOURCE_DIR}/src/index.html ${CMAKE_CURRENT_BINARY_DIR}/index.html)
 
-# Copy the js directory whenever enchiladas gets built
+# Copy the js directory whenever quesadillas gets built
 ADD_CUSTOM_COMMAND(TARGET server PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/src/js ${CMAKE_CURRENT_BINARY_DIR}/js)
 
-# Copy the css directory whenever enchiladas gets built
+# Copy the css directory whenever quesadillas gets built
 ADD_CUSTOM_COMMAND(TARGET server PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/src/css ${CMAKE_CURRENT_BINARY_DIR}/css)

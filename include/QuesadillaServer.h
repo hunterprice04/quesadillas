@@ -1,7 +1,7 @@
-#ifndef ENCH_SERVER_H
-#define ENCH_SERVER_H
+#ifndef QUES_SERVER_H
+#define QUES_SERVER_H
 
-#include <enchiladas.h>
+#include <quesadillas.h>
 
 #include "pbnj.h"
 #include "Renderer.h"
@@ -13,7 +13,7 @@
 #include "pistache/router.h"
 #include "pistache/endpoint.h"
 
-namespace ench {
+namespace ques {
     using namespace Pistache;
 
     union Dataset
@@ -22,13 +22,13 @@ namespace ench {
         pbnj::TimeSeries *timeseries;
     };
 
-    typedef std::tuple<pbnj::Configuration*, ench::Dataset, 
+    typedef std::tuple<pbnj::Configuration*, ques::Dataset, 
             pbnj::Camera*, pbnj::Renderer**> pbnj_container;
 
-    class EnchiladaServer 
+    class QuesadillaServer 
     {
         public:
-            EnchiladaServer(Pistache::Address addr, std::map<std::string, pbnj_container> vm);
+            QuesadillaServer(Pistache::Address addr, std::map<std::string, pbnj_container> vm);
 
             void init(std::string app_dir, size_t threads=2);
             void start();

@@ -1,4 +1,4 @@
-# Enchiladas
+# Quesadillas
 
 A lightweight web-based platform for OSPRay renderer, built on top of the PBNJ library.
 
@@ -27,11 +27,11 @@ You can use the distributed version that can be installed easily using the Tapes
 
 ## Plugins
 
-At the moment, you can use the Enchiladas HTTP server for running custom scripts and programs through the `extern` request. 
+At the moment, you can use the Quesadillas HTTP server for running custom scripts and programs through the `extern` request. 
 A request such as `/extern/foo/bar` runs the program `foo` in the `plugins` directory with arguments `bar`. The results are then routed back to the client. 
 
 If the `plugins` directory doesn't exist, you can create it in your `build` directory. Make sure that your plugin programs are executable before using them. 
 
 ## Documentation 
 
-You can find more information in the [Wiki](https://github.com/seelabutk/enchiladas/wiki).
+You can find more information in the [Wiki](https://github.com/seelabutk/quesadillas/wiki).

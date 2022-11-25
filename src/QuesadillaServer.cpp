@@ -1,4 +1,4 @@
-#include "EnchiladaServer.h"
+#include "QuesadillaServer.h"
 #include "utils.h"
 
 #include <iostream>
@@ -24,17 +24,17 @@
 #include "TransferFunction.h"
 #include "TimeSeries.h"
 
-namespace ench {
+namespace ques {
 
 using namespace Pistache;
 
-EnchiladaServer::EnchiladaServer(Pistache::Address addr, std::map<std::string, 
-        ench::pbnj_container> vm):  
+QuesadillaServer::QuesadillaServer(Pistache::Address addr, std::map<std::string, 
+        ques::pbnj_container> vm):  
     httpEndpoint(std::make_shared<Pistache::Http::Endpoint>(addr)), volume_map(vm)
 {
 }
 
-void EnchiladaServer::init(std::string app_dir, size_t threads)
+void QuesadillaServer::init(std::string app_dir, size_t threads)
 {
     auto opts = Pistache::Http::Endpoint::options()
         .threads(threads)
@@ -46,44 +46,44 @@ void EnchiladaServer::init(std::string app_dir, size_t threads)
     setupRoutes();
 }
 
-void EnchiladaServer::start()
+void QuesadillaServer::start()
 {
     std::cout << "Listening..." << std::endl;
     this->httpEndpoint->setHandler(router.handler());
     this->httpEndpoint->serveThreaded();
 }
 
-void EnchiladaServer::shutdown()
+void QuesadillaServer::shutdown()
 {
     std::cout<<"Shutting down."<<std::endl;
     this->httpEndpoint->shutdown();
 }
 
-void EnchiladaServer::setupRoutes()
+void QuesadillaServer::setupRoutes()
 {
     using namespace Pistache::Rest;
     // serving html files
-    Routes::Get(router, "/:filename?", Routes::bind(&EnchiladaServer::handleRoot, this));
+    Routes::Get(router, "/:filename?", Routes::bind(&QuesadillaServer::handleRoot, this));
     // serving static js files
     Routes::Get(router, "/js/:filename", 
-            Routes::bind(&EnchiladaServer::handleJS, this));
+            Routes::bind(&QuesadillaServer::handleJS, this));
     // serving static css files
     Routes::Get(router, "/css/:filename",
-            Routes::bind(&EnchiladaServer::handleCSS, this));
+            Routes::bind(&QuesadillaServer::handleCSS, this));
     // serving renders
     Routes::Get(router, "/image/:dataset/:x/:y/:z/:upx/:upy/:upz/:vx/:vy/:vz/:imagesize/:options?",
-            Routes::bind(&EnchiladaServer::handleImage, this));
+            Routes::bind(&QuesadillaServer::handleImage, this));
     // routing to plugins
     Routes::Get(router, "/extern/:plugin/:args?", 
-            Routes::bind(&EnchiladaServer::handleExternalCommand, this));
+            Routes::bind(&QuesadillaServer::handleExternalCommand, this));
     Routes::Post(router, "/config/:configname", 
-            Routes::bind(&EnchiladaServer::handleConfiguration, this));
+            Routes::bind(&QuesadillaServer::handleConfiguration, this));
     Routes::Get(router, "/app/data/:filename", 
-            Routes::bind(&EnchiladaServer::handleAppData, this));
+            Routes::bind(&QuesadillaServer::handleAppData, this));
 
 }
 
-void EnchiladaServer::serveFile(Pistache::Http::ResponseWriter &response,
+void QuesadillaServer::serveFile(Pistache::Http::ResponseWriter &response,
         std::string filename)
 {
     try
@@ -98,7 +98,7 @@ void EnchiladaServer::serveFile(Pistache::Http::ResponseWriter &response,
 }
 
 
-void EnchiladaServer::handleRoot(const Rest::Request &request,
+void QuesadillaServer::handleRoot(const Rest::Request &request,
         Pistache::Http::ResponseWriter response)
 {
     std::string filename = "index.html"; // default root
@@ -109,7 +109,7 @@ void EnchiladaServer::handleRoot(const Rest::Request &request,
     serveFile(response, filename.c_str());
 }
 
-void EnchiladaServer::handleJS(const Rest::Request &request, 
+void QuesadillaServer::handleJS(const Rest::Request &request, 
         Pistache::Http::ResponseWriter response)
 {
     auto filename = request.param(":filename").as<std::string>();
@@ -117,7 +117,7 @@ void EnchiladaServer::handleJS(const Rest::Request &request,
     serveFile(response, filename.c_str());
 }
 
-void EnchiladaServer::handleCSS(const Rest::Request &request, 
+void QuesadillaServer::handleCSS(const Rest::Request &request, 
         Pistache::Http::ResponseWriter response)
 {
     auto filename = request.param(":filename").as<std::string>();
@@ -125,7 +125,7 @@ void EnchiladaServer::handleCSS(const Rest::Request &request,
     serveFile(response, filename.c_str());
 }
 
-void EnchiladaServer::handleExternalCommand(const Rest::Request &request, 
+void QuesadillaServer::handleExternalCommand(const Rest::Request &request, 
         Pistache::Http::ResponseWriter response)
 {
     std::string program = request.param(":plugin").as<std::string>();
@@ -141,7 +141,7 @@ void EnchiladaServer::handleExternalCommand(const Rest::Request &request,
     response.send(Http::Code::Ok, json_results);
 }
 
-void EnchiladaServer::handleImage(const Rest::Request &request,
+void QuesadillaServer::handleImage(const Rest::Request &request,
         Pistache::Http::ResponseWriter response)
 {
     std::string request_uri = "/image/";
@@ -194,7 +194,7 @@ void EnchiladaServer::handleImage(const Rest::Request &request,
     }
 
     pbnj::Configuration *config = std::get<0>(volume_map[dataset]);
-    ench::Dataset udataset = std::get<1>(volume_map[dataset]);
+    ques::Dataset udataset = std::get<1>(volume_map[dataset]);
     pbnj::Camera *camera = std::get<2>(volume_map[dataset]);
     pbnj::Renderer **renderer = std::get<3>(volume_map[dataset]);
     
@@ -432,7 +432,7 @@ void EnchiladaServer::handleImage(const Rest::Request &request,
     }
 }
 
-void EnchiladaServer::handleConfiguration(const Rest::Request &request, 
+void QuesadillaServer::handleConfiguration(const Rest::Request &request, 
         Pistache::Http::ResponseWriter response)
 {
     std::string config_name = request.param(":configname").as<std::string>();
@@ -445,7 +445,7 @@ void EnchiladaServer::handleConfiguration(const Rest::Request &request,
     response.send(Http::Code::Ok, "changed");
 }
 
-void EnchiladaServer::handleAppData(const Rest::Request &request, 
+void QuesadillaServer::handleAppData(const Rest::Request &request, 
         Pistache::Http::ResponseWriter response)
 {
     auto mime = Http::Mime::MediaType::fromString("video/mp4");
@@ -456,7 +456,7 @@ void EnchiladaServer::handleAppData(const Rest::Request &request,
     serveFile(response, filename.c_str());
 }
 
-void EnchiladaServer::calculateTileRegion(int tile_index, int num_tiles,
+void QuesadillaServer::calculateTileRegion(int tile_index, int num_tiles,
         int n_cols, std::vector<float> &region)
 {
     int tile_x = tile_index % n_cols;

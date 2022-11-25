@@ -1,7 +1,7 @@
-#include "EnchiladaServer.h"
+#include "QuesadillaServer.h"
 #include "utils.h"
 
-namespace ench {
+namespace ques {
     /*
      * MOA::TODO This needs to be smarter. For starters, 
      * it should free the old stuff. Also, it should check
@@ -10,7 +10,7 @@ namespace ench {
     void apply_config(std::string config_name, 
             pbnj::Configuration *config,
             std::map<std::string, 
-            ench::pbnj_container>* volume_map)
+            ques::pbnj_container>* volume_map)
     {
         pbnj::Camera *camera = new pbnj::Camera(
                 config->imageWidth, 
@@ -19,7 +19,7 @@ namespace ench {
         // Let's keep a renderer per volume to support time series for now
         pbnj::Renderer **renderer; 
         pbnj::CONFSTATE single_multi = config->getConfigState();
-        ench::Dataset dataset;
+        ques::Dataset dataset;
 
         // centerView has to be called before setCamera because the light position
         // depends on it. 

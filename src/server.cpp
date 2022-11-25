@@ -1,6 +1,6 @@
-// ENCH headers
-#include "enchiladas.h"
-#include "EnchiladaServer.h"
+// QUES headers
+#include "quesadillas.h"
+#include "QuesadillaServer.h"
 #include "utils.h"
 
 // PBNJ headers
@@ -28,7 +28,7 @@ void sigintHandler(int sig)
     doShutdown = 1;
 }
 
-void waitForShutdown(ench::EnchiladaServer *ench) 
+void waitForShutdown(ques::QuesadillaServer *ques) 
 {
     std::signal(SIGINT, sigintHandler);
 
@@ -37,7 +37,7 @@ void waitForShutdown(ench::EnchiladaServer *ench)
         sleep(1);
     }
 
-    ench->shutdown();
+    ques->shutdown();
 }
 
 int main(int argc, const char **argv)
@@ -77,7 +77,7 @@ int main(int argc, const char **argv)
      * A volume hash table that keeps PBNJ objects of a dataset
      * in one place 
      */
-    std::map<std::string, ench::pbnj_container> volume_map;
+    std::map<std::string, ques::pbnj_container> volume_map;
 
     // Must call pbnjInit before using it
     pbnj::pbnjInit(&argc, argv);
@@ -108,7 +108,7 @@ int main(int argc, const char **argv)
 
     Pistache::Address addr(Pistache::Ipv4::any(), port);
 
-    ench::EnchiladaServer eserver(addr, volume_map);
+    ques::QuesadillaServer eserver(addr, volume_map);
     eserver.init(app_dir, 1);
 
     eserver.start();
