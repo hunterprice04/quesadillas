@@ -3,7 +3,7 @@
 
 #include <quesadillas.h>
 
-#include "pbnj.h"
+#include "rasty.h"
 #include "Renderer.h"
 #include "Configuration.h"
 #include "Camera.h"
@@ -18,17 +18,17 @@ namespace ques {
 
     union Dataset
     {
-        pbnj::Volume* volume;
-        pbnj::TimeSeries *timeseries;
+        rasty::Volume* volume;
+        rasty::TimeSeries *timeseries;
     };
 
-    typedef std::tuple<pbnj::Configuration*, ques::Dataset, 
-            pbnj::Camera*, pbnj::Renderer**> pbnj_container;
+    typedef std::tuple<rasty::Configuration*, ques::Dataset, 
+            rasty::Camera*, rasty::Renderer**> rasty_container;
 
     class QuesadillaServer 
     {
         public:
-            QuesadillaServer(Pistache::Address addr, std::map<std::string, pbnj_container> vm);
+            QuesadillaServer(Pistache::Address addr, std::map<std::string, rasty_container> vm);
 
             void init(std::string app_dir, size_t threads=2);
             void start();
@@ -59,7 +59,7 @@ namespace ques {
 
             std::shared_ptr<Pistache::Http::Endpoint> httpEndpoint;
             Rest::Router router;
-            std::map<std::string, pbnj_container> volume_map;
+            std::map<std::string, rasty_container> volume_map;
             std::string app_dir;
     };
 }

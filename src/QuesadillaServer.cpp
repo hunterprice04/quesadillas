@@ -17,7 +17,7 @@
 #include "pistache/endpoint.h"
 #include "pistache/client.h"
 
-#include "pbnj.h"
+#include "rasty.h"
 #include "Camera.h"
 #include "Configuration.h"
 #include "Renderer.h"
@@ -29,7 +29,7 @@ namespace ques {
 using namespace Pistache;
 
 QuesadillaServer::QuesadillaServer(Pistache::Address addr, std::map<std::string, 
-        ques::pbnj_container> vm):  
+        ques::rasty_container> vm):  
     httpEndpoint(std::make_shared<Pistache::Http::Endpoint>(addr)), volume_map(vm)
 {
 }
@@ -84,7 +84,7 @@ void QuesadillaServer::setupRoutes()
 }
 
 void QuesadillaServer::serveFile(Pistache::Http::ResponseWriter &response,
-        std::string filename)
+        std::string filename) /*good*/
 {
     try
     {
@@ -99,7 +99,7 @@ void QuesadillaServer::serveFile(Pistache::Http::ResponseWriter &response,
 
 
 void QuesadillaServer::handleRoot(const Rest::Request &request,
-        Pistache::Http::ResponseWriter response)
+        Pistache::Http::ResponseWriter response) /*good*/
 {
     std::string filename = "index.html"; // default root
     if (request.hasParam(":filename"))
@@ -110,7 +110,7 @@ void QuesadillaServer::handleRoot(const Rest::Request &request,
 }
 
 void QuesadillaServer::handleJS(const Rest::Request &request, 
-        Pistache::Http::ResponseWriter response)
+        Pistache::Http::ResponseWriter response) /*good*/
 {
     auto filename = request.param(":filename").as<std::string>();
     filename = "js/" + filename;
@@ -118,7 +118,7 @@ void QuesadillaServer::handleJS(const Rest::Request &request,
 }
 
 void QuesadillaServer::handleCSS(const Rest::Request &request, 
-        Pistache::Http::ResponseWriter response)
+        Pistache::Http::ResponseWriter response) /*good*/
 {
     auto filename = request.param(":filename").as<std::string>();
     filename = "css/" + filename;
@@ -126,7 +126,7 @@ void QuesadillaServer::handleCSS(const Rest::Request &request,
 }
 
 void QuesadillaServer::handleExternalCommand(const Rest::Request &request, 
-        Pistache::Http::ResponseWriter response)
+        Pistache::Http::ResponseWriter response) /*good*/
 {
     std::string program = request.param(":plugin").as<std::string>();
     std::string args = "";
@@ -193,10 +193,10 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         return;
     }
 
-    pbnj::Configuration *config = std::get<0>(volume_map[dataset]);
+    rasty::Configuration *config = std::get<0>(volume_map[dataset]);
     ques::Dataset udataset = std::get<1>(volume_map[dataset]);
-    pbnj::Camera *camera = std::get<2>(volume_map[dataset]);
-    pbnj::Renderer **renderer = std::get<3>(volume_map[dataset]);
+    rasty::Camera *camera = std::get<2>(volume_map[dataset]);
+    rasty::Renderer **renderer = std::get<3>(volume_map[dataset]);
     
     std::vector<unsigned char> image_data;
 
@@ -208,7 +208,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     std::string save_filename;
     std::vector<std::string> filters; // If any image filters are specified, we'll put them here
     std::vector<float> isovalues; // In case isosurfacing is supported
-    pbnj::Volume *temp_volume; // Either a normal volume or a timeseries one 
+    rasty::Volume *temp_volume; // Either a normal volume or a timeseries one 
     bool has_timesteps = false;
     bool do_tiling = false;
     int n_cols = 1;
@@ -216,9 +216,9 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     // set a default volume based on the dataset type
     // it'll be either a timeseries volume from timestep 0
     // or the only single volume that exists
-    pbnj::CONFSTATE single_multi = config->getConfigState();
-    if (single_multi == pbnj::CONFSTATE::SINGLE_NOVAR 
-            || single_multi == pbnj::CONFSTATE::SINGLE_VAR)
+    rasty::CONFSTATE single_multi = config->getConfigState();
+    if (single_multi == rasty::CONFSTATE::SINGLE_NOVAR 
+            || single_multi == rasty::CONFSTATE::SINGLE_VAR)
     {
         temp_volume = udataset.volume; //by default
     }
@@ -296,47 +296,47 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
                 }
             }
 
-            if (*it == "isosurface")
-            {
-                it++; // Get the isovalues
-                std::string isovalues_str = *it;
+            // if (*it == "isosurface")
+            // {
+            //     it++; // Get the isovalues
+            //     std::string isovalues_str = *it;
                 
-                // parse the isovalues
-                const char *isovalues_char = isovalues_str.c_str();
-                do {
-                    const char* iso_begin = isovalues_char;
-                    while(*isovalues_char != '-' && *isovalues_char)
-                        isovalues_char++;
-                    isovalues.push_back(std::stof(std::string(iso_begin, isovalues_char)));
-                } while(0 != *isovalues_char++);
+            //     // parse the isovalues
+            //     const char *isovalues_char = isovalues_str.c_str();
+            //     do {
+            //         const char* iso_begin = isovalues_char;
+            //         while(*isovalues_char != '-' && *isovalues_char)
+            //             isovalues_char++;
+            //         isovalues.push_back(std::stof(std::string(iso_begin, isovalues_char)));
+            //     } while(0 != *isovalues_char++);
 
-                do_isosurface = true;
-            }
+            //     do_isosurface = true;
+            // }
 
-            if (*it == "colormap")
-            {
-                it++; // Get the value of the colormap
-                // search the pbnj colormaps
-                std::map<std::string, std::vector<float>>::iterator cmap_it;
-                for (cmap_it = pbnj::colormaps.begin(); cmap_it != pbnj::colormaps.end(); cmap_it++)
-                {
-                    if (*it == cmap_it->first)
-                    {
-                        if (has_timesteps)
-                        {
+            // if (*it == "colormap")
+            // {
+            //     it++; // Get the value of the colormap
+            //     // search the rasty colormaps
+            //     std::map<std::string, std::vector<float>>::iterator cmap_it;
+            //     for (cmap_it = rasty::colormaps.begin(); cmap_it != rasty::colormaps.end(); cmap_it++)
+            //     {
+            //         if (*it == cmap_it->first)
+            //         {
+            //             if (has_timesteps)
+            //             {
                         
-                            pbnj::Volume *temp = udataset.timeseries->getVolume(renderer_index);
-                            temp->setColorMap(pbnj::colormaps[*it]);
-                        }
-                        else
-                        {
-                            udataset.volume->setColorMap(pbnj::colormaps[*it]);
-                        }
-                        break;
-                    }
-                }
-                // if the colormap wasn't found, it will default to grayscale
-            }
+            //                 rasty::Volume *temp = udataset.timeseries->getVolume(renderer_index);
+            //                 temp->setColorMap(rasty::colormaps[*it]);
+            //             }
+            //             else
+            //             {
+            //                 udataset.volume->setColorMap(rasty::colormaps[*it]);
+            //             }
+            //             break;
+            //         }
+            //     }
+            //     // if the colormap wasn't found, it will default to grayscale
+            // }
 
             if (*it == "onlysave")
             {
@@ -345,34 +345,34 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
                 save_filename = *it;
             }
 
-            if (*it == "filename")
-            {
-                it++;
-                filename = *it;
-                renderer_index = udataset.timeseries->getVolumeIndex(filename);
-                temp_volume = udataset.timeseries->getVolume(renderer_index);
-                if (renderer_index == -1)
-                {
-                    response.send(Http::Code::Not_Found, "Image does not exist");
-                    return;
-                }        
-            }
+            // if (*it == "filename")
+            // {
+            //     it++;
+            //     filename = *it;
+            //     renderer_index = udataset.timeseries->getVolumeIndex(filename);
+            //     temp_volume = udataset.timeseries->getVolume(renderer_index);
+            //     if (renderer_index == -1)
+            //     {
+            //         response.send(Http::Code::Not_Found, "Image does not exist");
+            //         return;
+            //     }        
+            // }
 
-            if (*it == "filters")
-            {
-                it++;
-                std::string filter_names = *it;
+            // if (*it == "filters")
+            // {
+            //     it++;
+            //     std::string filter_names = *it;
                 
-                // parse the filter names and apply them one by one
-                const char *filters_chars = filter_names.c_str();
-                do {
-                    const char* filter_begin = filters_chars;
-                    while(*filters_chars != '-' && *filters_chars)
-                        filters_chars++;
-                    filters.push_back(std::string(filter_begin, filters_chars));
-                } while(0 != *filters_chars++);
+            //     // parse the filter names and apply them one by one
+            //     const char *filters_chars = filter_names.c_str();
+            //     do {
+            //         const char* filter_begin = filters_chars;
+            //         while(*filters_chars != '-' && *filters_chars)
+            //             filters_chars++;
+            //         filters.push_back(std::string(filter_begin, filters_chars));
+            //     } while(0 != *filters_chars++);
 
-            }
+            // }
         }
     }
 
@@ -440,7 +440,7 @@ void QuesadillaServer::handleConfiguration(const Rest::Request &request,
     std::string json_string = (encoded_json);
     rapidjson::Document json;
     json.Parse(json_string.c_str());
-    pbnj::Configuration *config = new pbnj::Configuration(json);
+    rasty::Configuration *config = new rasty::Configuration(json);
     apply_config(config_name, config, &volume_map);
     response.send(Http::Code::Ok, "changed");
 }

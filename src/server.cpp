@@ -3,14 +3,14 @@
 #include "QuesadillaServer.h"
 #include "utils.h"
 
-// PBNJ headers
-#include "pbnj.h"
+// Rasty headers
+#include "rasty.h"
 #include "Camera.h"
 #include "Configuration.h"
 #include "Renderer.h"
-#include "TransferFunction.h"
+// #include "TransferFunction.h"
 #include "Volume.h"
-#include "TimeSeries.h"
+// #include "TimeSeries.h"
 
 #include <dirent.h>
 #include <iostream>
@@ -74,13 +74,13 @@ int main(int argc, const char **argv)
     struct dirent *dirp;
 
     /*
-     * A volume hash table that keeps PBNJ objects of a dataset
+     * A volume hash table that keeps RASTY objects of a dataset
      * in one place 
      */
-    std::map<std::string, ques::pbnj_container> volume_map;
+    std::map<std::string, ques::rasty_container> volume_map;
 
-    // Must call pbnjInit before using it
-    pbnj::pbnjInit(&argc, argv);
+    // Must call rastyInit before using it
+    rasty::rastyInit(&argc, argv);
 
     while ((dirp = readdir(directory)) != NULL)
     {
@@ -95,10 +95,10 @@ int main(int argc, const char **argv)
         std::string config_name = filename.substr(0, index);
         if (extension.compare(".json") == 0)
         {
-            pbnj::ConfigReader *reader = new pbnj::ConfigReader();
+            rasty::ConfigReader *reader = new rasty::ConfigReader();
             rapidjson::Document json; 
             reader->parseConfigFile(config_dir + "/" + filename, json);
-            pbnj::Configuration *config = new pbnj::Configuration(json);
+            rasty::Configuration *config = new rasty::Configuration(json);
             apply_config(config_name, config, &volume_map);
         }
     }

@@ -5,20 +5,20 @@ namespace ques {
     /*
      * MOA::TODO This needs to be smarter. For starters, 
      * it should free the old stuff. Also, it should check
-     * and only update a pbnj_container if it needs to. 
+     * and only update a rasty_container if it needs to. 
      */
     void apply_config(std::string config_name, 
-            pbnj::Configuration *config,
+            rasty::Configuration *config,
             std::map<std::string, 
-            ques::pbnj_container>* volume_map)
+            ques::rasty_container>* volume_map)
     {
-        pbnj::Camera *camera = new pbnj::Camera(
+        rasty::Camera *camera = new rasty::Camera(
                 config->imageWidth, 
                 config->imageHeight);
 
         // Let's keep a renderer per volume to support time series for now
-        pbnj::Renderer **renderer; 
-        pbnj::CONFSTATE single_multi = config->getConfigState();
+        rasty::Renderer **renderer; 
+        rasty::CONFSTATE single_multi = config->getConfigState();
         ques::Dataset dataset;
 
         // centerView has to be called before setCamera because the light position
@@ -29,10 +29,10 @@ namespace ques {
         /*
          * If we have a single volume at hand
          */
-        if (single_multi == pbnj::CONFSTATE::SINGLE_NOVAR 
-                || single_multi == pbnj::CONFSTATE::SINGLE_VAR)
+        if (single_multi == rasty::CONFSTATE::SINGLE_NOVAR 
+                || single_multi == rasty::CONFSTATE::SINGLE_VAR)
         {
-            dataset.volume = new pbnj::Volume(
+            dataset.volume = new rasty::Volume(
                     config->dataFilename, 
                     config->dataVariable, 
                     config->dataXDim, 
@@ -42,8 +42,8 @@ namespace ques {
             dataset.volume->setColorMap(config->colorMap);
             dataset.volume->setOpacityMap(config->opacityMap);
             dataset.volume->attenuateOpacity(config->opacityAttenuation);
-            renderer = new pbnj::Renderer*[1];
-            renderer[0] = new pbnj::Renderer();
+            renderer = new rasty::Renderer*[1];
+            renderer[0] = new rasty::Renderer();
             renderer[0]->setVolume(dataset.volume);
             renderer[0]->setBackgroundColor(config->bgColor);
             renderer[0]->setCamera(camera);
@@ -52,10 +52,10 @@ namespace ques {
         /*
          * If we have a time series
          */
-        else if (single_multi == pbnj::CONFSTATE::MULTI_VAR 
-                || single_multi == pbnj::CONFSTATE::MULTI_NOVAR)
+        else if (single_multi == rasty::CONFSTATE::MULTI_VAR 
+                || single_multi == rasty::CONFSTATE::MULTI_NOVAR)
         {
-            dataset.timeseries = new pbnj::TimeSeries(
+            dataset.timeseries = new rasty::TimeSeries(
                     config->globbedFilenames, 
                     config->dataVariable, 
                     config->dataXDim,
@@ -67,10 +67,10 @@ namespace ques {
             dataset.timeseries->setMemoryMapping(true);
             dataset.timeseries->setMaxMemory(30);
 
-            renderer = new pbnj::Renderer*[dataset.timeseries->getLength()];
+            renderer = new rasty::Renderer*[dataset.timeseries->getLength()];
             for (int i = 0; i < dataset.timeseries->getLength(); i++)
             {
-                renderer[i] = new pbnj::Renderer();
+                renderer[i] = new rasty::Renderer();
                 renderer[i]->setVolume(dataset.timeseries->getVolume(i));
                 renderer[i]->setBackgroundColor(config->bgColor);
                 renderer[i]->setCamera(camera);
@@ -79,7 +79,7 @@ namespace ques {
         }
         else
         {
-            std::cerr<<"Cannot open this type of PBNJ file: "<<config_name;
+            std::cerr<<"Cannot open this type of RASTY file: "<<config_name;
             return;
         }
 

@@ -5,7 +5,7 @@ namespace ques {
             std::string data);
     std::string exec(const char* cmd);
     void apply_config(std::string config_name, 
-            pbnj::Configuration *config,
+            rasty::Configuration *config,
             std::map<std::string, 
-            ques::pbnj_container>* volume_map);
+            ques::rasty_container>* volume_map);
 }
