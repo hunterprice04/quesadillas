@@ -5,9 +5,11 @@
 
 #include "rasty.h"
 #include "Renderer.h"
+#include "Cbar.h"
 #include "Configuration.h"
 #include "Camera.h"
-#include "TimeSeries.h"
+#include "DataFile.h"
+#include "Raster.h"
 
 #include "pistache/http.h"
 #include "pistache/router.h"
@@ -16,14 +18,14 @@
 namespace ques {
     using namespace Pistache;
 
-    union Dataset
+    struct Dataset
     {
-        rasty::Volume* volume;
-        rasty::TimeSeries *timeseries;
+        rasty::Raster* raster;
+        rasty::DataFile* data;
     };
 
     typedef std::tuple<rasty::Configuration*, ques::Dataset, 
-            rasty::Camera*, rasty::Renderer**> rasty_container;
+            rasty::Camera*, rasty::Renderer*> rasty_container;
 
     class QuesadillaServer 
     {
@@ -59,7 +61,7 @@ namespace ques {
 
             std::shared_ptr<Pistache::Http::Endpoint> httpEndpoint;
             Rest::Router router;
-            std::map<std::string, rasty_container> volume_map;
+            std::map<std::string, rasty_container> rasty_map;
             std::string app_dir;
     };
 }

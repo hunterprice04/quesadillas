@@ -8,8 +8,9 @@
 #include "Camera.h"
 #include "Configuration.h"
 #include "Renderer.h"
+#include "Raster.h"
 // #include "TransferFunction.h"
-#include "Volume.h"
+// #include "Volume.h"
 // #include "TimeSeries.h"
 
 #include <dirent.h>
@@ -73,14 +74,17 @@ int main(int argc, const char **argv)
     }
     struct dirent *dirp;
 
+
+    std::cout<<"Loading configuration files..."<<std::endl;
+
     /*
      * A volume hash table that keeps RASTY objects of a dataset
      * in one place 
      */
-    std::map<std::string, ques::rasty_container> volume_map;
-
+    std::map<std::string, ques::rasty_container> rasty_map;
     // Must call rastyInit before using it
-    rasty::rastyInit(&argc, argv);
+    // rasty::rastyInit(&argc, argv);
+    rasty::rastyInit(argc, argv);
 
     while ((dirp = readdir(directory)) != NULL)
     {
@@ -99,23 +103,25 @@ int main(int argc, const char **argv)
             rapidjson::Document json; 
             reader->parseConfigFile(config_dir + "/" + filename, json);
             rasty::Configuration *config = new rasty::Configuration(json);
-            apply_config(config_name, config, &volume_map);
+            apply_config(config_name, config, &rasty_map);
         }
     }
 
+    std::cout << "Configuration files loaded" << std::endl;
+    std::cout << "Starting server..." << std::endl;
     Pistache::Port port(9080);
     port = std::stol(argv[2]);
 
     Pistache::Address addr(Pistache::Ipv4::any(), port);
 
-    ques::QuesadillaServer eserver(addr, volume_map);
+    ques::QuesadillaServer eserver(addr, rasty_map);
     eserver.init(app_dir, 1);
 
     eserver.start();
 
     std::thread waitForShutdownThread(waitForShutdown, &eserver);
     waitForShutdownThread.join();
-
+    std::cout << "Server stopped" << std::endl;
     return 0;
 }
 

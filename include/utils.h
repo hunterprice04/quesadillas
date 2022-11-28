@@ -7,5 +7,5 @@ namespace ques {
     void apply_config(std::string config_name, 
             rasty::Configuration *config,
             std::map<std::string, 
-            ques::rasty_container>* volume_map);
+            ques::rasty_container>* rasty_map);
 }
