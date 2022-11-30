@@ -1,6 +1,6 @@
 <!DOCTYPE html>
     <head>
-        <title>Tapestry</title>
+        <title>GeoFabric</title>
         <link rel="stylesheet" href="css/style.css">
 
         <!-- jQuery dependency -->
@@ -24,15 +24,15 @@
     </head>
     <body>
         <div class="keyframes"></div>
-        <div class="hyperimage" id="teapot" data-dataset="supernova"></div>
-        <img class="hyperimage" id="turbulence" data-dataset="turbulence" data-isovalues="1"/>    
+        <!-- <div class="hyperimage" id="teapot" data-dataset="supernova"></div> -->
+        <img class="hyperimage" id="turbulence" data-dataset="LFBB" data-action="position="/>    
 
-        <a class="hyperaction" href="#" for="turbulence" data-action="position=-100,10,800">Set camera</a>
-        <a class="hyperaction" href="#" for="turbulence" data-action="link(teapot)">Link</a>
-        <a class="hyperaction" href="#" for="turbulence" data-action="unlink(teapot)">Unlink</a>
+        <a class="hyperaction" href="#" for="turbulence" data-action="position=0,0.5,0.5">Set camera</a>
+        <!-- <a class="hyperaction" href="#" for="turbulence" data-action="link(teapot)">Link</a> -->
+        <!-- <a class="hyperaction" href="#" for="turbulence" data-action="unlink(teapot)">Unlink</a> -->
 
         <br>
-        Isosurface threshold
-        <input class="threshold-slider" type="range" min=1 max=30>
+        Timestep Slider
+         <input class="timestep-slider" type="range" min=0 max=500>
     </body>
 </html>

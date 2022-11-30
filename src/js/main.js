@@ -7,9 +7,9 @@ $(document).ready(function(){
 
     // Listen to slider events and change the 
     // isosurface threshold accordingly
-    $(".threshold-slider").on("input", function(){
+    $(".timestep-slider").on("input", function(){
         $(".hyperimage").eq(1).data("tapestry")
-            .settings.isovalues=[parseInt($(this).val())];
+            .settings.timestep=[parseInt($(this).val())];
         $(".hyperimage").eq(1).data("tapestry").render(0);
     });
 });

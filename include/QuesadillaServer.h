@@ -24,7 +24,7 @@ namespace ques {
         rasty::DataFile* data;
     };
 
-    typedef std::tuple<rasty::Configuration*, ques::Dataset, 
+    typedef std::tuple<rasty::Configuration*, ques::Dataset*, 
             rasty::Camera*, rasty::Renderer*> rasty_container;
 
     class QuesadillaServer 

@@ -143,7 +143,7 @@ void QuesadillaServer::handleExternalCommand(const Rest::Request &request,
 void QuesadillaServer::handleImage(const Rest::Request &request,
         Pistache::Http::ResponseWriter response)
 {
-    std::cout << "Rendering image..." << std::endl;
+    // std::cout << "Rendering image..." << std::endl;
     std::string request_uri = "/image/";
 
     int camera_x = 0;
@@ -163,7 +163,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
 
     if (request.hasParam(":dataset"))
     {
-        std::cout << "getting prams" << std::endl;
+        // std::cout << "getting prams" << std::endl;
         dataset = request.param(":dataset").as<std::string>();
         request_uri += dataset + "/";
 
@@ -186,7 +186,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             std::to_string(view_x) + "/" + std::to_string(view_y) + "/" + std::to_string(view_z) + "/" + 
             std::to_string(imagesize) + "/"; 
     }
-
+    std::cout << "request uri: " << request_uri << std::endl;
     // Check if this dataset exists in the loaded datasets
     if (rasty_map.count(dataset) == 0)
     {
@@ -194,12 +194,10 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         return;
     }
 
-    std::cout << "fetching configs" << std::endl;
     rasty::Configuration *config = std::get<0>(rasty_map[dataset]);
-    ques::Dataset udataset = std::get<1>(rasty_map[dataset]);
+    ques::Dataset *udataset = std::get<1>(rasty_map[dataset]);
     rasty::Camera *camera = std::get<2>(rasty_map[dataset]);
     rasty::Renderer *renderer = std::get<3>(rasty_map[dataset]);
-    
     std::vector<unsigned char> image_data;
 
     // int renderer_index = 0; // Equal to a valid timestep
@@ -223,24 +221,22 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     if (single_multi == rasty::CONFSTATE::SINGLE_NOVAR 
             || single_multi == rasty::CONFSTATE::SINGLE_VAR)
     {
-        std::cout << "single volume" << std::endl;
-        temp_raster = udataset.raster; //by default
-        temp_data = udataset.data; //by default
+        // std::cout << "single volume" << std::endl;
+        temp_raster = udataset->raster; //by default
+        temp_data = udataset->data; //by default
     }
     // else
     // {
-    //     temp_volume = udataset.timeseries->getVolume(0); // by default
+    //     temp_volume = udataset->timeseries->getVolume(0); // by default
     //     has_timesteps = true;
     // }
 
     // set the full region of the image as the default
-    std::cout << "setting region" << std::endl;
     camera->setRegion(1., 1., 0., 0.);
 
     // parse the request's extra options
     if (request.hasParam(":options"))
     {
-        std::cout << "parsing options" << std::endl;
         std::string options_line = request.param(":options").as<std::string>();
         request_uri += options_line;
         std::vector<std::string> options;
@@ -291,10 +287,10 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
                 it++;
                 int timestep = std::stoi(*it);
                 if (has_timesteps && timestep >= 0 && 
-                        timestep < udataset.data->timeDim)
+                        timestep < udataset->data->timeDim)
                 {
                     temp_data->loadTimeStep(timestep);
-                    // temp_volume = udataset.timeseries->getVolume(renderer_index);
+                    // temp_volume = udataset->timeseries->getVolume(renderer_index);
                 }
                 else
                 {
@@ -331,12 +327,12 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             //             if (has_timesteps)
             //             {
                         
-            //                 rasty::Volume *temp = udataset.timeseries->getVolume(renderer_index);
+            //                 rasty::Volume *temp = udataset->timeseries->getVolume(renderer_index);
             //                 temp->setColorMap(rasty::colormaps[*it]);
             //             }
             //             else
             //             {
-            //                 udataset.volume->setColorMap(rasty::colormaps[*it]);
+            //                 udataset->volume->setColorMap(rasty::colormaps[*it]);
             //             }
             //             break;
             //         }
@@ -355,8 +351,8 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             // {
             //     it++;
             //     filename = *it;
-            //     renderer_index = udataset.timeseries->getVolumeIndex(filename);
-            //     temp_volume = udataset.timeseries->getVolume(renderer_index);
+            //     renderer_index = udataset->timeseries->getVolumeIndex(filename);
+            //     temp_volume = udataset->timeseries->getVolume(renderer_index);
             //     if (renderer_index == -1)
             //     {
             //         response.send(Http::Code::Not_Found, "Image does not exist");
@@ -382,7 +378,6 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         }
     }
 
-    std::cout << "setting up camera" << std::endl;
     camera->setImageSize(imagesize/n_cols, imagesize/n_cols);
     /* for capping the size of the render
     camera->setImageSize(std::min(config->imageWidth, imagesize),
@@ -399,11 +394,9 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     // }
     // else
     // {
-    std::cout << "setting up renderer" << std::endl;
-
-        renderer->setRaster(temp_raster);
-        renderer->setCamera(camera);
-        renderer->setData(temp_data);
+    renderer->setRaster(temp_raster);
+    renderer->setCamera(camera);
+    renderer->setData(temp_data);
 
     // }
 
@@ -417,7 +410,6 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     }
     else
     {
-        std::cout << "rendering image" << std::endl;
         std::string encoded_image_data;
         if (format == "jpg")
         {
