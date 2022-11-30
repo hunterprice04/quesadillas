@@ -122,6 +122,8 @@ int main(int argc, const char **argv)
     std::thread waitForShutdownThread(waitForShutdown, &eserver);
     waitForShutdownThread.join();
     std::cout << "Server stopped" << std::endl;
+    ospShutdown();
+
     return 0;
 }
 

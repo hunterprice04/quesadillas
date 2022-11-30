@@ -38,7 +38,9 @@ namespace ques {
             std::cout << "Creating new Raster from " << config->geoFilename << std::endl;
             // rasty::Raster *raster = new rasty::Raster(config->geoFilename);
             dataset->raster = new rasty::Raster(config->geoFilename);
-            
+            dataset->raster->setElevationScale(config->elevationScale);
+            dataset->raster->setHeightWidthScale(config->heightWidthScale);
+
             std::cout << "Creating new DataFile from " << config->dataFilename << std::endl;
             dataset->data = new rasty::DataFile();
             dataset->data->loadFromFile(config->dataFilename);
@@ -62,47 +64,14 @@ namespace ques {
             std::cout << "Adding light" << std::endl;
             renderer->addLight();
 
-            // renderer = new rasty::Renderer*[1];
-            // renderer[0] = new rasty::Renderer();
-            // renderer[0]->setVolume(dataset->volume);
-            // renderer[0]->setBackgroundColor(config->bgColor);
-            // renderer[0]->setCamera(camera);
-            // renderer[0]->setSamples(config->samples);
         }
-        /*
-         * If we have a time series
-         */
-        // else if (single_multi == rasty::CONFSTATE::MULTI_VAR 
-        //         || single_multi == rasty::CONFSTATE::MULTI_NOVAR)
-        // {
-        //     dataset->timeseries = new rasty::TimeSeries(
-        //             config->globbedFilenames, 
-        //             config->dataVariable, 
-        //             config->dataXDim,
-        //             config->dataYDim,
-        //             config->dataZDim);
-        //     dataset->timeseries->setColorMap(config->colorMap);
-        //     dataset->timeseries->setOpacityMap(config->opacityMap);
-        //     dataset->timeseries->setOpacityAttenuation(config->opacityAttenuation);
-        //     dataset->timeseries->setMemoryMapping(true);
-        //     dataset->timeseries->setMaxMemory(30);
-
-        //     renderer = new rasty::Renderer*[dataset->timeseries->getLength()];
-        //     for (int i = 0; i < dataset->timeseries->getLength(); i++)
-        //     {
-        //         renderer[i] = new rasty::Renderer();
-        //         renderer[i]->setVolume(dataset->timeseries->getVolume(i));
-        //         renderer[i]->setBackgroundColor(config->bgColor);
-        //         renderer[i]->setCamera(camera);
-        //         renderer[i]->setSamples(config->samples);
-        //     }
-        // }
         else
         {
             std::cerr<<"Cannot open this type of RASTY file: "<<config_name;
             return;
         }
-        std::cout << renderer->lastRasterID << std::endl;
+
+        renderer->setupWorld();
 
         (*rasty_map)[config_name] = std::make_tuple(config, dataset, camera, renderer);
     }

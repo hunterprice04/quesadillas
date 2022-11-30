@@ -36,9 +36,10 @@ QuesadillaServer::QuesadillaServer(Pistache::Address addr, std::map<std::string,
 void QuesadillaServer::init(std::string app_dir, size_t threads)
 {
     auto opts = Pistache::Http::Endpoint::options()
-        .threads(threads);
-        // .flags(Pistache::Tcp::Options::InstallSignalHandler);
-
+        .threads(threads)
+        .flags(Pistache::Tcp::Options::ReuseAddr | 
+                Pistache::Tcp::Options::ReusePort);
+                
     this->httpEndpoint->init(opts);
     this->app_dir = app_dir;
 
@@ -200,16 +201,13 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     rasty::Renderer *renderer = std::get<3>(rasty_map[dataset]);
     std::vector<unsigned char> image_data;
 
-    // int renderer_index = 0; // Equal to a valid timestep
     bool onlysave = false;
     bool do_isosurface = false;
     std::string format = "jpg";
     std::string filename = "";
     std::string save_filename;
-    // std::vector<std::string> filters; // If any image filters are specified, we'll put them here
-    // std::vector<float> isovalues; // In case isosurfacing is supported
-    rasty::Raster *temp_raster; // Either a normal volume or a timeseries one 
-    rasty::DataFile *temp_data; // Either a normal volume or a timeseries one 
+    rasty::Raster *temp_raster;  
+    rasty::DataFile *temp_data;
     bool has_timesteps = false;
     bool do_tiling = false;
     int n_cols = 1;
@@ -224,12 +222,11 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         // std::cout << "single volume" << std::endl;
         temp_raster = udataset->raster; //by default
         temp_data = udataset->data; //by default
+        if (temp_data->timeDim > 1)
+        {
+            has_timesteps = true;
+        }
     }
-    // else
-    // {
-    //     temp_volume = udataset->timeseries->getVolume(0); // by default
-    //     has_timesteps = true;
-    // }
 
     // set the full region of the image as the default
     camera->setRegion(1., 1., 0., 0.);
@@ -256,6 +253,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             {
                 it++;
                 std::string tile_str = *it;
+
                 const char *tile_char = tile_str.c_str();
                 std::vector<int> tile_values;
 
@@ -278,67 +276,26 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
 
             if (*it == "format")
             {
+                std::cout << "format" << std::endl;
                 it++;
                 format = *it;
             }
 
             if (*it == "timestep")
             {
+                std::cout << "timestep" << std::endl;
                 it++;
                 int timestep = std::stoi(*it);
                 if (has_timesteps && timestep >= 0 && 
                         timestep < udataset->data->timeDim)
                 {
                     temp_data->loadTimeStep(timestep);
-                    // temp_volume = udataset->timeseries->getVolume(renderer_index);
                 }
                 else
                 {
                     std::cerr<<"Invalid timestep: "<<timestep<<std::endl;
                 }
             }
-
-            // if (*it == "isosurface")
-            // {
-            //     it++; // Get the isovalues
-            //     std::string isovalues_str = *it;
-                
-            //     // parse the isovalues
-            //     const char *isovalues_char = isovalues_str.c_str();
-            //     do {
-            //         const char* iso_begin = isovalues_char;
-            //         while(*isovalues_char != '-' && *isovalues_char)
-            //             isovalues_char++;
-            //         isovalues.push_back(std::stof(std::string(iso_begin, isovalues_char)));
-            //     } while(0 != *isovalues_char++);
-
-            //     do_isosurface = true;
-            // }
-
-            // if (*it == "colormap")
-            // {
-            //     it++; // Get the value of the colormap
-            //     // search the rasty colormaps
-            //     std::map<std::string, std::vector<float>>::iterator cmap_it;
-            //     for (cmap_it = rasty::colormaps.begin(); cmap_it != rasty::colormaps.end(); cmap_it++)
-            //     {
-            //         if (*it == cmap_it->first)
-            //         {
-            //             if (has_timesteps)
-            //             {
-                        
-            //                 rasty::Volume *temp = udataset->timeseries->getVolume(renderer_index);
-            //                 temp->setColorMap(rasty::colormaps[*it]);
-            //             }
-            //             else
-            //             {
-            //                 udataset->volume->setColorMap(rasty::colormaps[*it]);
-            //             }
-            //             break;
-            //         }
-            //     }
-            //     // if the colormap wasn't found, it will default to grayscale
-            // }
 
             if (*it == "onlysave")
             {
@@ -347,90 +304,46 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
                 save_filename = *it;
             }
 
-            // if (*it == "filename")
-            // {
-            //     it++;
-            //     filename = *it;
-            //     renderer_index = udataset->timeseries->getVolumeIndex(filename);
-            //     temp_volume = udataset->timeseries->getVolume(renderer_index);
-            //     if (renderer_index == -1)
-            //     {
-            //         response.send(Http::Code::Not_Found, "Image does not exist");
-            //         return;
-            //     }        
-            // }
-
-            // if (*it == "filters")
-            // {
-            //     it++;
-            //     std::string filter_names = *it;
-                
-            //     // parse the filter names and apply them one by one
-            //     const char *filters_chars = filter_names.c_str();
-            //     do {
-            //         const char* filter_begin = filters_chars;
-            //         while(*filters_chars != '-' && *filters_chars)
-            //             filters_chars++;
-            //         filters.push_back(std::string(filter_begin, filters_chars));
-            //     } while(0 != *filters_chars++);
-
-            // }
         }
     }
 
     camera->setImageSize(imagesize/n_cols, imagesize/n_cols);
-    /* for capping the size of the render
-    camera->setImageSize(std::min(config->imageWidth, imagesize),
-            std::min(config->imageHeight, imagesize));
-    */
-
     camera->setPosition(camera_x, camera_y, camera_z);
     camera->setUpVector(up_x, up_y, up_z);
     camera->setView(view_x, view_y, view_z);
 
-    // if (do_isosurface)
-    // {
-    //     renderer[renderer_index]->setIsosurface(temp_volume, isovalues);
-    // }
-    // else
-    // {
-    renderer->setRaster(temp_raster);
-    renderer->setCamera(camera);
+    // std::cout << "renderer setqting data " << std::endl;
     renderer->setData(temp_data);
 
     // }
 
     if (onlysave)
     {
-        std::cout << "saving image" << std::endl;
+        save_filename = "test";
         // no filters are supported for the onlysave option at the moment
-        std::cout<<"Saving to "<<save_filename<<std::endl;
         renderer->renderImage("/app/data/" + save_filename + "." + format);
+        // renderer->renderImage(save_filename + "." + format);
         response.send(Http::Code::Ok, "saved");
     }
     else
     {
+
+        std::cout << "rendering image" << std::endl;
         std::string encoded_image_data;
         if (format == "jpg")
         {
+            std::cout << "rendering to jpg" << std::endl;
             renderer->renderToJPGObject(image_data, 100);
         }
         else if (format == "png")
         {
+            std::cout << "rendering to png" << std::endl;
             renderer->renderToPNGObject(image_data);
         }
         encoded_image_data = std::string(image_data.begin(), image_data.end());
 
         // Pad the request_uri
         request_uri.insert(0, 2000 - request_uri.size(), ' ');
-
-        // for (auto it = filters.begin(); it != filters.end(); it++)
-        // {
-        //     std::string filter = *it;
-        //     filter = this->app_dir + "/plugins/" + filter;
-        //     std::string filtered_data;
-        //     encoded_image_data = exec_filter(filter.c_str(), request_uri, encoded_image_data);
-        // }
 
         auto mime = Http::Mime::MediaType::fromString("image/" + format);
         response.send(Http::Code::Ok, encoded_image_data, mime);

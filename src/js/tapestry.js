@@ -311,6 +311,7 @@
         {
             // timestep needs to come first for the server
             options_str += "timestep," + options["timestep"] + ",";
+
         }
         for (var i in options)
         {
@@ -376,6 +377,7 @@
             this.timelog[path] = [Date.now(), imagesize, false, 0];
 
             img.onload = function(ev) {
+
                 var image_path = ev.target.src.slice(
                         ev.target.src.indexOf("/image/"));
                 self.timelog[image_path][3] = Date.now();
@@ -545,6 +547,7 @@
     {
         var operator_index = action.search(/\+|=|\(|\)/);
         var operation = action.slice(0, operator_index);
+
         if (operation == 'position')
         {
             var position = action.slice(operator_index + 1);
