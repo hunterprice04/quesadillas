@@ -253,7 +253,6 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             {
                 it++;
                 std::string tile_str = *it;
-
                 const char *tile_char = tile_str.c_str();
                 std::vector<int> tile_values;
 
@@ -276,14 +275,12 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
 
             if (*it == "format")
             {
-                std::cout << "format" << std::endl;
                 it++;
                 format = *it;
             }
 
             if (*it == "timestep")
             {
-                std::cout << "timestep" << std::endl;
                 it++;
                 int timestep = std::stoi(*it);
                 if (has_timesteps && timestep >= 0 && 
@@ -312,10 +309,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     camera->setUpVector(up_x, up_y, up_z);
     camera->setView(view_x, view_y, view_z);
 
-    // std::cout << "renderer setqting data " << std::endl;
     renderer->setData(temp_data);
-
-    // }
 
     if (onlysave)
     {

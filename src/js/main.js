@@ -1,9 +1,10 @@
 $(document).ready(function(){
     $(".hyperimage").tapestry({
-        n_tiles: 16,
+        n_tiles: 4,
         width: 1024,
         height: 1024,
         n_timesteps:500,
+        animation_interval: 500, 
     });
 
     // Listen to slider events and change the 
