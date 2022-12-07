@@ -7,11 +7,24 @@ $(document).ready(function(){
         animation_interval: 500, 
     });
 
-    // Listen to slider events and change the 
-    // isosurface threshold accordingly
-    // $(".timestep-slider").on("input", function(){
-    //     $(".hyperimage").eq(1).data("tapestry")
-    //         .current_timestep=[parseInt($(this).val())];
-    //     $(".hyperimage").eq(1).data("tapestry").render(0);
-    // });
+    // variableNames = ["Accumulated_Precipitation","Accumulated_Precipitation","Accumulated_Precipitation"];
+    variableNames = $(".hyperimage").eq(0).data("tapestry").settings.variable_list;
+    var select = document.getElementsByClassName("variable-select").LFBB,
+        option,
+        i = 0,
+        il = variableNames.length;
+
+    for (; i < il; i++) {
+        option = document.createElement('option');
+        option.value = variableNames[i];
+        option.innerHTML = variableNames[i];
+        select.appendChild(option);
+    }
+
+    $(".variable-select").on("input", function(){
+        console.log($(this).val());
+        $(".hyperimage").eq(0).data("tapestry")
+            .settings.variable=$(this).val();
+        $(".hyperimage").eq(0).data("tapestry").render(0);
+    });
 });

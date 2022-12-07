@@ -70,9 +70,14 @@ void QuesadillaServer::setupRoutes()
     // serving static css files
     Routes::Get(router, "/css/:filename",
             Routes::bind(&QuesadillaServer::handleCSS, this));
-    // serving renders
+    // serving variable names
+    Routes::Get(router, "/var/:dataset",
+            Routes::bind(&QuesadillaServer::handleVarList, this));
+    // serving renders  /image/:dataset.:imagesize.:extension
     Routes::Get(router, "/image/:dataset/:x/:y/:z/:upx/:upy/:upz/:vx/:vy/:vz/:imagesize/:options?",
             Routes::bind(&QuesadillaServer::handleImage, this));
+    // Routes::Get(router, "/image/:dataset/:imagesize/:extension/:variable/:x/:y/:z/:upx/:upy/:upz/:vx/:vy/:vz/:options?",
+    //         Routes::bind(&QuesadillaServer::handleImage, this));
     // routing to plugins
     Routes::Get(router, "/extern/:plugin/:args?", 
             Routes::bind(&QuesadillaServer::handleExternalCommand, this));
@@ -141,11 +146,59 @@ void QuesadillaServer::handleExternalCommand(const Rest::Request &request,
     response.send(Http::Code::Ok, json_results);
 }
 
+void QuesadillaServer::handleVarList(const Rest::Request &request,
+        Pistache::Http::ResponseWriter response)
+{
+    std::string dataset = "";
+
+    if (request.hasParam(":dataset"))
+    {
+        dataset = request.param(":dataset").as<std::string>();
+    }
+
+    if (rasty_map.count(dataset) == 0)
+    {
+        response.send(Http::Code::Not_Found, "Datset does not exist");
+        return;
+    }
+
+    rasty::Configuration *config = std::get<0>(rasty_map[dataset]);
+    ques::Dataset *udataset = std::get<1>(rasty_map[dataset]);
+    rasty::Camera *camera = std::get<2>(rasty_map[dataset]);
+    rasty::Renderer *renderer = std::get<3>(rasty_map[dataset]);
+
+    rasty::DataFile *temp_data;
+
+    temp_data = udataset->data;
+
+    std::string json_results = "{ \"variables\": [";
+    for (int i = 0; i < temp_data->variables.size(); i++)
+    {
+        json_results += "\"" + temp_data->variables[i] + "\"";
+        if (i < temp_data->variables.size() - 1)
+        {
+            json_results += ",";
+        }
+    }
+    json_results += "], ";
+    json_results += "\"timesteps\": ";
+    json_results += std::to_string(temp_data->timeDim);
+    json_results += " }";
+
+    response.send(Http::Code::Ok, json_results);
+}
+
 void QuesadillaServer::handleImage(const Rest::Request &request,
         Pistache::Http::ResponseWriter response)
 {
+
     // std::cout << "Rendering image..." << std::endl;
     std::string request_uri = "/image/";
+
+    std::string dataset = "";
+    int imagesize = 0;
+    std::string format = "jpg";
+    std::string varname = "";
 
     int camera_x = 0;
     int camera_y = 0;
@@ -159,14 +212,12 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     float view_y = 0;
     float view_z = 1;
 
-    int imagesize = 0;
-    std::string dataset = "";
 
     if (request.hasParam(":dataset"))
     {
-        // std::cout << "getting prams" << std::endl;
         dataset = request.param(":dataset").as<std::string>();
-        request_uri += dataset + "/";
+        // varname = request.param(":variable").as<std::string>();
+        imagesize = request.param(":imagesize").as<int>();
 
         camera_x = request.param(":x").as<std::int32_t>(); 
         camera_y = request.param(":y").as<std::int32_t>(); 
@@ -180,14 +231,14 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         view_y = request.param(":vy").as<float>();
         view_z = request.param(":vz").as<float>();
 
-        imagesize = request.param(":imagesize").as<int>();
-
-        request_uri += std::to_string(camera_x) + "/" + std::to_string(camera_y) + "/" + std::to_string(camera_z) + "/" +
+        request_uri += dataset + "/" + 
+            std::to_string(camera_x) + "/" + std::to_string(camera_y) + "/" + std::to_string(camera_z) + "/" +
             std::to_string(up_x) + "/" + std::to_string(up_y) + "/" + std::to_string(up_z) + "/" + 
-            std::to_string(view_x) + "/" + std::to_string(view_y) + "/" + std::to_string(view_z) + "/" + 
-            std::to_string(imagesize) + "/"; 
+            std::to_string(view_x) + "/" + std::to_string(view_y) + "/" + std::to_string(view_z) + "/"
+            + std::to_string(imagesize) + "/"; 
     }
-    std::cout << "request uri: " << request_uri << std::endl;
+
+    std::cout << " base request uri: " << request_uri << std::endl;
     // Check if this dataset exists in the loaded datasets
     if (rasty_map.count(dataset) == 0)
     {
@@ -203,7 +254,6 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
 
     bool onlysave = false;
     bool do_isosurface = false;
-    std::string format = "jpg";
     std::string filename = "";
     std::string save_filename;
     rasty::Raster *temp_raster;  
@@ -227,6 +277,8 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             has_timesteps = true;
         }
     }
+
+    varname = temp_data->variables[0];
 
     // set the full region of the image as the default
     camera->setRegion(1., 1., 0., 0.);
@@ -273,10 +325,15 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
                 camera->setRegion(region[0], region[1], region[2], region[3]);
             }
 
-            if (*it == "format")
-            {
+            if (*it == "format") {
                 it++;
                 format = *it;
+            }
+
+            if (*it == "variable") {
+                it++;
+                varname = *it;
+                std::cout << "varname: " << varname << std::endl;
             }
 
             if (*it == "timestep")
@@ -302,6 +359,16 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             }
 
         }
+    }
+
+    // load request variable if sepecified
+    if (varname != ""){
+        auto it = temp_data->varmap.find(varname);
+        if (it->second.isNull()) {
+            response.send(Http::Code::Not_Found, "Variable does not exist");
+            return;
+        }
+        temp_data->loadVariable(varname);
     }
 
     camera->setImageSize(imagesize/n_cols, imagesize/n_cols);

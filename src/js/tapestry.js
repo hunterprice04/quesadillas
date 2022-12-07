@@ -118,6 +118,12 @@
                 .split(",").map(function(i){return parseFloat(i)});
         }
 
+        if ($(this.element).attr("data-variable"))
+        {
+            this.settings.variable = $(this.element).attr("data-variable");
+        }
+
+
         if ($(this.element).attr("data-filters"))
         {
             this.settings.filters = $(this.element).attr("data-filters").split(",");
@@ -135,9 +141,68 @@
         // First render
         this.setup_camera(original_position);
         this.setup_handlers();
+        this.setup_variables();
         $(this.element).mousedown();
         $(this.element).mouseup();
         this.camera.Quat = [0.0, 0.0, 0.0, 1.0];
+    }
+
+    Tapestry.prototype.setup_variables = function()
+    {
+        var dataset = $(this.element).attr("data-dataset");
+
+
+        var host;
+        if (this.settings.host.constructor === Array)
+        {
+            var random = Math.floor(Math.random() 
+                    * this.settings.host.length);
+            host = this.settings.host[random] + "/";
+        }
+        else
+        {
+            host = this.settings.host + "/";
+        }
+
+        var path = host + "var/" + dataset;
+        
+
+        var result;
+        function variable_callback(response) {
+            result = response;
+        }
+
+        $.ajax({
+            url: path,
+            type: "GET",
+            dataType: "json",
+            async: false,
+            success: function(response) {
+                result = response;
+            },
+        });
+        console.log(result);
+        console.log(result.variables);
+        console.log(result.timesteps);
+        console.log(this);
+        this.settings.variable_list = result.variables;
+        this.settings.n_timesteps = result.timesteps;
+        // .done(function(response){
+        //     console.log(response.variables);
+        //     console.log(response.timesteps);
+        //     console.log(this);
+        // });
+        // console.log(ajaxResp);
+        // console.log(ajaxResp.responseJSON);
+        // $.get(path, function(data, status){
+        //     // data = JSON.parse(data);
+        //     // console.log(data);
+        //     // console.log($(this.element));
+        //     // console.log($(this.element).tapestry.settings);
+        //     $(this.element).tapestry.settings.variable_list = data.variables;
+        //     $(this.element).tapestry.settings.n_timesteps = data.timesteps;
+        // });
+
     }
 
     /**
@@ -275,12 +340,18 @@
         var viewz = -z;
 
         var dataset = $(this.element).attr("data-dataset");
+
         
         var options = {};
 
         if (tiling)
         {
             options["tiling"] = tileid.toString() + "-" + this.settings.n_tiles.toString();
+        }
+        // var variable = $(this.element).attr("data-variable");
+
+        if ($(this.element).attr("data-variable")) {
+            options["variable"] = this.settings.variable;
         }
 
         if ($(this.element).attr("data-colormap"))
@@ -633,6 +704,7 @@
         var MIN_LOW_RES_SIZE = 256;
         var MAX_LOW_RES_SIZE = 256;
         return Math.min(Math.max(intended, MIN_LOW_RES_SIZE), MAX_LOW_RES_SIZE);
+        // return this.settings.width;
     }
 
     Tapestry.prototype.setup_handlers = function()
@@ -769,6 +841,8 @@
         animation_interval: 100, // speed of timeseries animations
         n_timesteps: 1,
         do_isosurface: false,
+        variable: "",
+        variable_list: [],
         isovalues: [0], 
         filters: [],
         camera_link_status: 0 // 0: Not linked, 1: Waiting to be linked, 2: Linked

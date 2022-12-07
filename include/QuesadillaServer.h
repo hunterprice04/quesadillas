@@ -47,6 +47,8 @@ namespace ques {
                     Pistache::Http::ResponseWriter response);
             void handleCSS(const Rest::Request &request, 
                     Pistache::Http::ResponseWriter response);
+            void handleVarList(const Rest::Request &request, 
+                    Pistache::Http::ResponseWriter response);
             void handleImage(const Rest::Request &request,
                     Pistache::Http::ResponseWriter response);
             void handleExternalCommand(const Rest::Request &request,
