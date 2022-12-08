@@ -147,6 +147,10 @@
         this.camera.Quat = [0.0, 0.0, 0.0, 1.0];
     }
 
+    /**
+     * Sets up this list of variables that can be used with the given dataset.
+     * Queries the server endpoint for the list of variables. and number of timesteps
+     */
     Tapestry.prototype.setup_variables = function()
     {
         var dataset = $(this.element).attr("data-dataset");
@@ -165,12 +169,7 @@
         }
 
         var path = host + "var/" + dataset;
-        
-
         var result;
-        function variable_callback(response) {
-            result = response;
-        }
 
         $.ajax({
             url: path,
@@ -181,28 +180,23 @@
                 result = response;
             },
         });
-        console.log(result);
-        console.log(result.variables);
-        console.log(result.timesteps);
-        console.log(this);
-        this.settings.variable_list = result.variables;
-        this.settings.n_timesteps = result.timesteps;
-        // .done(function(response){
-        //     console.log(response.variables);
-        //     console.log(response.timesteps);
-        //     console.log(this);
-        // });
-        // console.log(ajaxResp);
-        // console.log(ajaxResp.responseJSON);
-        // $.get(path, function(data, status){
-        //     // data = JSON.parse(data);
-        //     // console.log(data);
-        //     // console.log($(this.element));
-        //     // console.log($(this.element).tapestry.settings);
-        //     $(this.element).tapestry.settings.variable_list = data.variables;
-        //     $(this.element).tapestry.settings.n_timesteps = data.timesteps;
-        // });
 
+        this.settings.variable_list = result.variables;
+        
+        // if the user has not specified a variable, use the first one
+        if (!$(this.element).attr("data-variable"))
+        {
+            this.settings.variable = this.settings.variable_list[0];
+        }
+
+
+        // if the user has not specified a timerange, set it to the full range
+        if (! $(this.element).attr("data-timerange") && this.settings.timesteps != 1)
+        {
+            this.settings.n_timesteps = result.timesteps;
+            this.timerange[0] = 0;
+            this.timerange[1] = this.settings.n_timesteps-1;
+        }
     }
 
     /**
@@ -348,11 +342,10 @@
         {
             options["tiling"] = tileid.toString() + "-" + this.settings.n_tiles.toString();
         }
-        // var variable = $(this.element).attr("data-variable");
 
-        if ($(this.element).attr("data-variable")) {
-            options["variable"] = this.settings.variable;
-        }
+        // if ($(this.element).attr("data-variable")) {
+        options["variable"] = this.settings.variable;
+        // }
 
         if ($(this.element).attr("data-colormap"))
         {
@@ -413,7 +406,6 @@
             + "/" + upx + "/" + upy + "/" + upz + "/"
             + viewx + "/" + viewy + "/" + viewz + "/"
             + quality.toString() + "/" + options_str;
-
         return path;
     }
 
@@ -471,6 +463,10 @@
                 this.linked_objs[i].render(imagesize, true);
             }
         }
+
+        this.settings.callbacks.forEach(element => {
+            element(this);
+        });
     }
 
     /**
@@ -845,6 +841,7 @@
         variable_list: [],
         isovalues: [0], 
         filters: [],
+        callbacks: [],
         camera_link_status: 0 // 0: Not linked, 1: Waiting to be linked, 2: Linked
     };
 

@@ -1,14 +1,31 @@
 $(document).ready(function(){
+    /**
+     * Setup timeslider callback to update slider position
+     */
+    var slider = document.getElementsByClassName("timestep-slider").LFBB
+    function timeslider_callback(tapestry){
+        slider.value = tapestry.current_timestep;
+    }
+    
+    /**
+     * Setup tapestry
+     */
     $(".hyperimage").tapestry({
         n_tiles: 4,
         width: 1024,
         height: 1024,
-        n_timesteps:500,
         animation_interval: 500, 
+        callbacks:[
+            timeslider_callback
+        ]
     });
 
-    // variableNames = ["Accumulated_Precipitation","Accumulated_Precipitation","Accumulated_Precipitation"];
-    variableNames = $(".hyperimage").eq(0).data("tapestry").settings.variable_list;
+
+    /**
+     * Setup variable name dropdown
+     */
+
+    var variableNames = $(".hyperimage").eq(0).data("tapestry").settings.variable_list;
     var select = document.getElementsByClassName("variable-select").LFBB,
         option,
         i = 0,
@@ -21,10 +38,30 @@ $(document).ready(function(){
         select.appendChild(option);
     }
 
+    /**
+     * Setup call back for variable selection
+     */
     $(".variable-select").on("input", function(){
-        console.log($(this).val());
         $(".hyperimage").eq(0).data("tapestry")
             .settings.variable=$(this).val();
         $(".hyperimage").eq(0).data("tapestry").render(0);
     });
+
+    /**
+     * Setup timestep-slider
+     */
+    var slider = document.getElementsByClassName("timestep-slider").LFBB
+    var timerange = $(".hyperimage").eq(0).data("tapestry").timerange;
+    slider.min = timerange[0];
+    slider.max = timerange[1];
+    slider.value = timerange[0];
+    /**
+     * Setup call back for timestep-slider
+     */
+    $(".timestep-slider").on("input", function(){
+        $(".hyperimage").eq(0).data("tapestry")
+            .current_timestep=parseInt($(this).val());
+        $(".hyperimage").eq(0).data("tapestry").render(0);
+    });
+
 });

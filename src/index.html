@@ -27,10 +27,10 @@
         <div 
             class="hyperimage" 
             id="LFBB" 
-            data-dataset="LFBB" 
-            data-variable="Accumulated_Precipitation" 
-            data-timerange="0..500"/> 
+            data-dataset="LFBB" /> 
         </div>   
+        <!-- data-timerange="0..500" -->
+        <!-- data-variable="Accumulated_Precipitation"  -->
 
         <a class="hyperaction" href="#" for="LFBB" data-action="position=0,255,255">Set camera</a>
         <a class="hyperaction" href="#" for="LFBB" data-action="play()">Start</a>
@@ -41,6 +41,8 @@
         <select class="variable-select" id="LFBB"></select>
 
         <!-- Timestep Slider -->
-         <!-- <input class="timestep-slider" type="range" min=0 max=500> -->
+        <br>
+        Timestep:
+         <input class="timestep-slider" id="LFBB" type="range">
     </body>
 </html>
