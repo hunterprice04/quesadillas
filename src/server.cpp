@@ -63,7 +63,7 @@ int main(int argc, const char **argv)
     {
         app_dir = argv[3];
     }
-
+    std::cout << "Application directory: " << app_dir << std::endl;
     // Variables for parsing the directory files
     std::string config_dir = argv[1];
     DIR *directory;
@@ -122,8 +122,7 @@ int main(int argc, const char **argv)
     std::thread waitForShutdownThread(waitForShutdown, &eserver);
     waitForShutdownThread.join();
     std::cout << "Server stopped" << std::endl;
-    ospShutdown();
-
+    rasty::rastyDestroy();
     return 0;
 }
 

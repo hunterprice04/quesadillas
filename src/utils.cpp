@@ -1,5 +1,6 @@
 #include "QuesadillaServer.h"
 #include "utils.h"
+#include <vector>
 
 namespace ques {
     /*
@@ -41,33 +42,41 @@ namespace ques {
             dataset->raster->setElevationScale(config->elevationScale);
             dataset->raster->setHeightWidthScale(config->heightWidthScale);
 
-            std::cout << "Creating new DataFile from " << config->dataFilename << std::endl;
             dataset->data = new rasty::DataFile();
             dataset->data->loadFromFile(config->dataFilename);
-            dataset->data->loadVariable(config->dataVariable);
-            dataset->data->loadTimeStep(1);
+            if (config->dataVariable == "")
+            {
+                std::vector<std::string> vars = dataset->data->getVariableNames();
+                dataset->data->loadVariable(vars[0]);
+            }
+            else
+            {
+                dataset->data->loadVariable(config->dataVariable);
+            }
+
+            dataset->data->loadTimeStep(0);
             
-            std::cout << "Creating new Cbar from " << config->colorMap << std::endl;
+            // std::cout << "Creating new Cbar from " << config->colorMap << std::endl;
             rasty::Cbar *cbar = new rasty::Cbar(config->colorMap);
 
-            std::cout << "Creating new Renderer" << std::endl;
+            // std::cout << "Creating new Renderer" << std::endl;
             renderer = new rasty::Renderer();
-            std::cout << renderer<< std::endl;
-            std::cout << "Setting raster" << std::endl;
+            // std::cout << renderer<< std::endl;
+            // std::cout << "Setting raster" << std::endl;
             renderer->setRaster(dataset->raster);
-            std::cout << "Setting cbar " << cbar << std::endl;
+            // std::cout << "Setting cbar " << cbar << std::endl;
             renderer->setCbar(cbar);
-            std::cout << "Setting data" << std::endl;
+            // std::cout << "Setting data" << std::endl;
             renderer->setData(dataset->data);
-            std::cout << "Setting camera" << std::endl;
+            // std::cout << "Setting camera" << std::endl;
             renderer->setCamera(camera);
-            std::cout << "Adding light" << std::endl;
+            // std::cout << "Adding light" << std::endl;
             renderer->addLight();
 
         }
         else
         {
-            std::cerr<<"Cannot open this type of RASTY file: "<<config_name;
+            std::cerr<<"Cannot open this type of RASTY file: "<< config_name << std::endl;
             return;
         }
 
