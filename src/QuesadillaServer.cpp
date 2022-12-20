@@ -209,7 +209,8 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
 
     std::string dataset = "";
     int imagesize = 0;
-    std::string format = "jpg";
+    // std::string format = "jpg";
+    std::string format = "png";
     std::string varname = "";
 
     int camera_x = 0;
