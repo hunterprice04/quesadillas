@@ -167,7 +167,6 @@
         {
             host = this.settings.host + "/";
         }
-
         var path = host + "var/" + dataset;
         var result;
 
@@ -197,6 +196,7 @@
             this.timerange[0] = 0;
             this.timerange[1] = this.settings.n_timesteps-1;
         }
+
     }
 
     /**
@@ -424,33 +424,81 @@
             remote_call = false;
         }
 
+        if (!window._requests) {
+            window._requests = new Set();
+        }
+
+        if (imagesize !== 0 && window._requests.size) {
+            return;
+        }
+
         var n_tiles = this.settings.n_tiles;
         var n_cols = Math.sqrt(n_tiles);
         var width = this.settings.width;
 
+        var tiles = new Array(n_tiles).fill(0).map(function(d, i) { return i; });
+        if (false && imagesize !== 0) {
+            tiles = tiles.filter(function(d, i) {
+                const x = i % n_cols - (n_cols/2|0) + 0.5,
+                    y = (i / n_cols|0) - (n_cols/2|0) + 0.5,
+                dist = Math.hypot(x, y) / Math.hypot(n_cols/2-0.5, n_cols/2-0.5);
+                return dist < 0.5;
+            });
+        }
+        if (false) {
+            tiles = tiles.filter(function(d, i) {
+                const x = i % n_cols - (n_cols/2|0) + 0.5,
+                    y = (i / n_cols|0) - (n_cols/2|0) + 0.5,
+                dist = Math.hypot(x, y) / Math.hypot(n_cols/2-0.5, n_cols/2-0.5);
+                return Math.abs(y) < 0.15 * n_cols;
+            });
+        }
+        var seed = new Array(n_tiles).fill(0).map(function(d, i, arr) {
+            const x = i % n_cols - (n_cols/2|0) + 0.5,
+                y = (i / n_cols|0) - (n_cols/2|0) + 0.5,
+            dist = Math.hypot(x, y) / Math.hypot(n_cols/2-0.5, n_cols/2-0.5);
+            return dist;
+        });
+        tiles.sort(function(a, b) { return seed[a] - seed[b]; });
+
         var requests = [];
-        for (var i = 0; i < n_tiles; i++)
+        for (let i of tiles)
         {
             var path = this.make_request(imagesize, i);
-            var img = new Image();
+            const img = new Image();
             var self = this;
             img.tileid = i.toString();
 
             // store timings in the log
-            this.timelog[path] = [Date.now(), imagesize, false, 0];
+            this.timelog[path.slice(path.indexOf("/image/"))] = [Date.now(), imagesize, false, 0];
 
+            const timeoutId = setTimeout(function() {
+                console.log('timeout');
+                //window._requests.delete(img);
+            }, 1000);
+            
             img.onload = function(ev) {
-
+                clearTimeout(timeoutId);
                 var image_path = ev.target.src.slice(
                         ev.target.src.indexOf("/image/"));
-                self.timelog[image_path][3] = Date.now();
-                self.timelog[image_path][2] = true;
 
                 var tile = $(self.element)
-                    .find("#tapestry-tile-" + this.tileid).eq(0);
-                tile.attr("src", this.src);
+                    .find("#tapestry-tile-" + i).eq(0);
+                if (self.timelog.hasOwnProperty(image_path))
+                {
+                    self.timelog[image_path][3] = Date.now();
+                    self.timelog[image_path][2] = tile.attr("src") === ev.target.src;
+                }
+                
+                window._requests.delete(ev.target);
             }
             img.src = path;
+
+            var tile = $(this.element)
+                .find("#tapestry-tile-" + i).eq(0);
+            tile.attr("src", path);
+            
+            window._requests.add(img);
         }
 
         // Don't rotate linked views if this call is
@@ -463,10 +511,6 @@
                 this.linked_objs[i].render(imagesize, true);
             }
         }
-
-        this.settings.callbacks.forEach(element => {
-            element(this);
-        });
     }
 
     /**
@@ -668,6 +712,7 @@
             targets = targets.replace(/\(|\)| /g, "");
             targets = targets.split(",");
             $(this.element).attr("data-dataset", targets[0]);
+            this.setup_variables();
             this.render(this.get_low_resolution());
         }
 

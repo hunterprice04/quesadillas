@@ -73,11 +73,11 @@ void QuesadillaServer::setupRoutes()
     // serving variable names
     Routes::Get(router, "/var/:dataset",
             Routes::bind(&QuesadillaServer::handleVarList, this));
-    // serving renders  /image/:dataset.:imagesize.:extension
+    Routes::Options(router, "/var/:dataset",
+        Routes::bind(&QuesadillaServer::handleVarList, this));
+    // serving renders  
     Routes::Get(router, "/image/:dataset/:x/:y/:z/:upx/:upy/:upz/:vx/:vy/:vz/:imagesize/:options?",
             Routes::bind(&QuesadillaServer::handleImage, this));
-    // Routes::Get(router, "/image/:dataset/:imagesize/:extension/:variable/:x/:y/:z/:upx/:upy/:upz/:vx/:vy/:vz/:options?",
-    //         Routes::bind(&QuesadillaServer::handleImage, this));
     // routing to plugins
     Routes::Get(router, "/extern/:plugin/:args?", 
             Routes::bind(&QuesadillaServer::handleExternalCommand, this));
@@ -151,6 +151,17 @@ void QuesadillaServer::handleVarList(const Rest::Request &request,
 {
     std::string dataset = "";
 
+    // needed for preflight requests
+    if (request.method() == Pistache::Http::Method::Options)
+    {
+        response.headers().add<Pistache::Http::Header::AccessControlAllowOrigin>("*");
+        response.headers().add<Pistache::Http::Header::AccessControlAllowMethods>("GET,OPTIONS");
+        response.headers().add<Pistache::Http::Header::AccessControlAllowHeaders>("Access-Control-Allow-Origin, Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
+        response.headers().add<Pistache::Http::Header::ContentType>(MIME(Text, Plain));
+        response.send(Http::Code::Ok, "OK");
+        return;
+    }
+
     if (request.hasParam(":dataset"))
     {
         dataset = request.param(":dataset").as<std::string>();
@@ -184,7 +195,8 @@ void QuesadillaServer::handleVarList(const Rest::Request &request,
     json_results += "\"timesteps\": ";
     json_results += std::to_string(temp_data->timeDim);
     json_results += " }";
-
+    
+    response.headers().add<Pistache::Http::Header::AccessControlAllowOrigin>("*");
     response.send(Http::Code::Ok, json_results);
 }
 
