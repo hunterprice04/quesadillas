@@ -274,6 +274,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     bool has_timesteps = false;
     bool do_tiling = false;
     int n_cols = 1;
+    int timestep = 0;
 
     // set a default volume based on the dataset type
     // it'll be either a timeseries volume from timestep 0
@@ -352,16 +353,8 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             if (*it == "timestep")
             {
                 it++;
-                int timestep = std::stoi(*it);
-                if (has_timesteps && timestep >= 0 && 
-                        timestep < udataset->data->timeDim)
-                {
-                    temp_data->loadTimeStep(timestep);
-                }
-                else
-                {
-                    std::cerr<<"Invalid timestep: "<<timestep<<std::endl;
-                }
+                timestep = std::stoi(*it);
+                std::cout << "timestep: " << timestep << std::endl;
             }
 
             if (*it == "onlysave")
@@ -382,6 +375,16 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             return;
         }
         temp_data->loadVariable(varname);
+        // load timestep here as well
+        if (has_timesteps && timestep >= 0 && 
+                timestep < udataset->data->timeDim)
+        {
+            temp_data->loadTimeStep(timestep);
+        }
+        else
+        {
+            std::cerr<<"Invalid timestep: "<<timestep<<std::endl;
+        }
     }
 
     camera->setImageSize(imagesize/n_cols, imagesize/n_cols);
