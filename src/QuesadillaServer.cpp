@@ -1,6 +1,5 @@
 #include "QuesadillaServer.h"
 #include "utils.h"
-#include "date.h"
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
