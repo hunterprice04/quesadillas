@@ -9,9 +9,6 @@
 #include "Configuration.h"
 #include "Renderer.h"
 #include "Raster.h"
-// #include "TransferFunction.h"
-// #include "Volume.h"
-// #include "TimeSeries.h"
 
 #include <dirent.h>
 #include <iostream>
@@ -82,10 +79,9 @@ int main(int argc, const char **argv)
      * in one place 
      */
     std::map<std::string, ques::rasty_container> rasty_map;
-    // Must call rastyInit before using it
-    // rasty::rastyInit(&argc, argv);
     rasty::rastyInit(argc, argv);
 
+    // Parse the configuration files
     while ((dirp = readdir(directory)) != NULL)
     {
         std::string filename(dirp->d_name);

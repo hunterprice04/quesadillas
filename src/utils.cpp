@@ -13,8 +13,6 @@ namespace ques {
             std::map<std::string, ques::rasty_container>* rasty_map)
     {
         std::cout << "Applying configuration: " << config_name << std::endl;
-        
-        std::cout << "Creating new camera" << std::endl;
         rasty::Camera *camera = new rasty::Camera(
                 config->imageWidth, 
                 config->imageHeight);
@@ -37,7 +35,6 @@ namespace ques {
                 || single_multi == rasty::CONFSTATE::SINGLE_VAR)
         {
             std::cout << "Creating new Raster from " << config->geoFilename << std::endl;
-            // rasty::Raster *raster = new rasty::Raster(config->geoFilename);
             dataset->raster = new rasty::Raster(config->geoFilename);
             dataset->raster->setElevationScale(config->elevationScale);
             dataset->raster->setHeightWidthScale(config->heightWidthScale);
@@ -56,23 +53,16 @@ namespace ques {
 
             dataset->data->loadTimeStep(0);
             
-            // std::cout << "Creating new Cbar from " << config->colorMap << std::endl;
             rasty::Cbar *cbar = new rasty::Cbar(config->colorMap);
 
-            // std::cout << "Creating new Renderer" << std::endl;
+            // create rendered
             renderer = new rasty::Renderer();
-            // std::cout << renderer<< std::endl;
-            // std::cout << "Setting raster" << std::endl;
             renderer->setRaster(dataset->raster);
-            // std::cout << "Setting cbar " << cbar << std::endl;
             renderer->setCbar(cbar);
-            // std::cout << "Setting data" << std::endl;
             renderer->setData(dataset->data);
-            // std::cout << "Setting camera" << std::endl;
             renderer->setCamera(camera);
-            // std::cout << "Adding light" << std::endl;
             renderer->addLight();
-
+            renderer->setupWorld();
         }
         else
         {
@@ -80,8 +70,7 @@ namespace ques {
             return;
         }
 
-        renderer->setupWorld();
-
+        // save created renderer/dataset
         (*rasty_map)[config_name] = std::make_tuple(config, dataset, camera, renderer);
     }
 

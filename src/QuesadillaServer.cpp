@@ -73,6 +73,7 @@ void QuesadillaServer::setupRoutes()
     // serving variable names
     Routes::Get(router, "/var/:dataset",
             Routes::bind(&QuesadillaServer::handleVarList, this));
+    // setting options endpoint (for CORS)
     Routes::Options(router, "/var/:dataset",
         Routes::bind(&QuesadillaServer::handleVarList, this));
     // serving renders  
@@ -89,7 +90,7 @@ void QuesadillaServer::setupRoutes()
 }
 
 void QuesadillaServer::serveFile(Pistache::Http::ResponseWriter &response,
-        std::string filename) /*good*/
+        std::string filename) 
 {
     try
     {
@@ -104,7 +105,7 @@ void QuesadillaServer::serveFile(Pistache::Http::ResponseWriter &response,
 
 
 void QuesadillaServer::handleRoot(const Rest::Request &request,
-        Pistache::Http::ResponseWriter response) /*good*/
+        Pistache::Http::ResponseWriter response) 
 {
     std::string filename = "index.html"; // default root
     if (request.hasParam(":filename"))
@@ -115,7 +116,7 @@ void QuesadillaServer::handleRoot(const Rest::Request &request,
 }
 
 void QuesadillaServer::handleJS(const Rest::Request &request, 
-        Pistache::Http::ResponseWriter response) /*good*/
+        Pistache::Http::ResponseWriter response)
 {
     auto filename = request.param(":filename").as<std::string>();
     filename = "js/" + filename;
@@ -123,7 +124,7 @@ void QuesadillaServer::handleJS(const Rest::Request &request,
 }
 
 void QuesadillaServer::handleCSS(const Rest::Request &request, 
-        Pistache::Http::ResponseWriter response) /*good*/
+        Pistache::Http::ResponseWriter response)
 {
     auto filename = request.param(":filename").as<std::string>();
     filename = "css/" + filename;
@@ -131,7 +132,7 @@ void QuesadillaServer::handleCSS(const Rest::Request &request,
 }
 
 void QuesadillaServer::handleExternalCommand(const Rest::Request &request, 
-        Pistache::Http::ResponseWriter response) /*good*/
+        Pistache::Http::ResponseWriter response) 
 {
     std::string program = request.param(":plugin").as<std::string>();
     std::string args = "";
@@ -146,12 +147,15 @@ void QuesadillaServer::handleExternalCommand(const Rest::Request &request,
     response.send(Http::Code::Ok, json_results);
 }
 
+/**
+ * Returns the list of variables and the allowed timesteps for the given dataset
+*/
 void QuesadillaServer::handleVarList(const Rest::Request &request,
         Pistache::Http::ResponseWriter response)
 {
     std::string dataset = "";
 
-    // needed for preflight requests
+    // needed for preflight requests (CORS)
     if (request.method() == Pistache::Http::Method::Options)
     {
         response.headers().add<Pistache::Http::Header::AccessControlAllowOrigin>("*");
@@ -162,26 +166,26 @@ void QuesadillaServer::handleVarList(const Rest::Request &request,
         return;
     }
 
+    // ensure dataset is valid
     if (request.hasParam(":dataset"))
     {
         dataset = request.param(":dataset").as<std::string>();
     }
-
     if (rasty_map.count(dataset) == 0)
     {
         response.send(Http::Code::Not_Found, "Datset does not exist");
         return;
     }
 
+    // retrieve the datset
     rasty::Configuration *config = std::get<0>(rasty_map[dataset]);
     ques::Dataset *udataset = std::get<1>(rasty_map[dataset]);
     rasty::Camera *camera = std::get<2>(rasty_map[dataset]);
     rasty::Renderer *renderer = std::get<3>(rasty_map[dataset]);
-
     rasty::DataFile *temp_data;
-
     temp_data = udataset->data;
 
+    // build the json response
     std::string json_results = "{ \"variables\": [";
     for (int i = 0; i < temp_data->variables.size(); i++)
     {
@@ -200,16 +204,16 @@ void QuesadillaServer::handleVarList(const Rest::Request &request,
     response.send(Http::Code::Ok, json_results);
 }
 
+/**
+ * Renders the requested image 
+*/
 void QuesadillaServer::handleImage(const Rest::Request &request,
         Pistache::Http::ResponseWriter response)
 {
 
-    // std::cout << "Rendering image..." << std::endl;
     std::string request_uri = "/image/";
-
     std::string dataset = "";
     int imagesize = 0;
-    // std::string format = "jpg";
     std::string format = "png";
     std::string varname = "";
 
@@ -225,11 +229,10 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     float view_y = 0;
     float view_z = 1;
 
-
+    // extract the parameters from the request
     if (request.hasParam(":dataset"))
     {
         dataset = request.param(":dataset").as<std::string>();
-        // varname = request.param(":variable").as<std::string>();
         imagesize = request.param(":imagesize").as<int>();
 
         camera_x = request.param(":x").as<std::int32_t>(); 
@@ -251,7 +254,6 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             + std::to_string(imagesize) + "/"; 
     }
 
-    std::cout << " base request uri: " << request_uri << std::endl;
     // Check if this dataset exists in the loaded datasets
     if (rasty_map.count(dataset) == 0)
     {
@@ -259,6 +261,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         return;
     }
 
+    // retrieve the dataset
     rasty::Configuration *config = std::get<0>(rasty_map[dataset]);
     ques::Dataset *udataset = std::get<1>(rasty_map[dataset]);
     rasty::Camera *camera = std::get<2>(rasty_map[dataset]);
@@ -279,18 +282,18 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     // set a default volume based on the dataset type
     // it'll be either a timeseries volume from timestep 0
     // or the only single volume that exists
-    rasty::CONFSTATE single_multi = config->getGeoConfigState();
-    if (single_multi == rasty::CONFSTATE::SINGLE_NOVAR 
-            || single_multi == rasty::CONFSTATE::SINGLE_VAR)
-    {
+    // rasty::CONFSTATE single_multi = config->getGeoConfigState();
+    // if (single_multi == rasty::CONFSTATE::SINGLE_NOVAR 
+    //         || single_multi == rasty::CONFSTATE::SINGLE_VAR)
+    // {
         // std::cout << "single volume" << std::endl;
-        temp_raster = udataset->raster; //by default
-        temp_data = udataset->data; //by default
-        if (temp_data->timeDim > 1)
-        {
-            has_timesteps = true;
-        }
+    temp_raster = udataset->raster; //by default
+    temp_data = udataset->data; //by default
+    if (temp_data->timeDim > 1)
+    {
+        has_timesteps = true;
     }
+    // }
 
     varname = temp_data->variables[0];
 
@@ -347,14 +350,12 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             if (*it == "variable") {
                 it++;
                 varname = *it;
-                std::cout << "varname: " << varname << std::endl;
             }
 
             if (*it == "timestep")
             {
                 it++;
                 timestep = std::stoi(*it);
-                std::cout << "timestep: " << timestep << std::endl;
             }
 
             if (*it == "onlysave")
@@ -369,13 +370,15 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
 
     // load request variable if sepecified
     if (varname != ""){
+        // ensure variable exists and load its metadata
         auto it = temp_data->varmap.find(varname);
         if (it->second.isNull()) {
             response.send(Http::Code::Not_Found, "Variable does not exist");
             return;
         }
         temp_data->loadVariable(varname);
-        // load timestep here as well
+
+        // load timestep here ( this is what actually loads data into memory )
         if (has_timesteps && timestep >= 0 && 
                 timestep < udataset->data->timeDim)
         {
@@ -387,11 +390,13 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         }
     }
 
+    // set the camera's position and view
     camera->setImageSize(imagesize/n_cols, imagesize/n_cols);
     camera->setPosition(camera_x, camera_y, camera_z);
     camera->setUpVector(up_x, up_y, up_z);
     camera->setView(view_x, view_y, view_z);
 
+    // set the renderer's data
     renderer->setData(temp_data);
 
     if (onlysave)
@@ -404,8 +409,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
     }
     else
     {
-
-        std::cout << "rendering image" << std::endl;
+        // render the image 
         std::string encoded_image_data;
         if (format == "jpg")
         {
