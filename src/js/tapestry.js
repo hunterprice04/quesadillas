@@ -2,7 +2,7 @@
  * The main tapestry module written in the jQuery module format
  * @namespace Tapestry
  */
-;(function ($, window){
+ ;(function ($, window){
     /**
      * Appends the tapestry function to jQuery functions. 
      * @param {object} options - All tapestry settings can 
@@ -149,7 +149,7 @@
 
     /**
      * Sets up this list of variables that can be used with the given dataset.
-     * Queries the server endpoint for the list of variables. and number of timesteps
+     * Queries the server endpoint for the list of variables, and number of timesteps
      */
     Tapestry.prototype.setup_variables = function()
     {
@@ -167,9 +167,10 @@
         {
             host = this.settings.host + "/";
         }
-        var path = host + "var/" + dataset;
+
         var result;
 
+        var path = host + "var/" + dataset;
         $.ajax({
             url: path,
             type: "GET",
@@ -423,13 +424,13 @@
         {
             remote_call = false;
         }
-
+        
         if (!window._requests) {
-            window._requests = new Set();
+        	window._requests = new Set();
         }
-
+        
         if (imagesize !== 0 && window._requests.size) {
-            return;
+        	return;
         }
 
         var n_tiles = this.settings.n_tiles;
@@ -441,7 +442,7 @@
             tiles = tiles.filter(function(d, i) {
                 const x = i % n_cols - (n_cols/2|0) + 0.5,
                     y = (i / n_cols|0) - (n_cols/2|0) + 0.5,
-                dist = Math.hypot(x, y) / Math.hypot(n_cols/2-0.5, n_cols/2-0.5);
+                    dist = Math.hypot(x, y) / Math.hypot(n_cols/2-0.5, n_cols/2-0.5);
                 return dist < 0.5;
             });
         }
@@ -449,7 +450,7 @@
             tiles = tiles.filter(function(d, i) {
                 const x = i % n_cols - (n_cols/2|0) + 0.5,
                     y = (i / n_cols|0) - (n_cols/2|0) + 0.5,
-                dist = Math.hypot(x, y) / Math.hypot(n_cols/2-0.5, n_cols/2-0.5);
+                    dist = Math.hypot(x, y) / Math.hypot(n_cols/2-0.5, n_cols/2-0.5);
                 return Math.abs(y) < 0.15 * n_cols;
             });
         }
@@ -475,12 +476,12 @@
             const timeoutId = setTimeout(function() {
                 console.log('timeout');
                 //window._requests.delete(img);
-            }, 1000);
-            
+            }, 2000);
+	    
             img.onload = function(ev) {
                 clearTimeout(timeoutId);
                 var image_path = ev.target.src.slice(
-                        ev.target.src.indexOf("/image/"));
+                    ev.target.src.indexOf("/image/"));
 
                 var tile = $(self.element)
                     .find("#tapestry-tile-" + i).eq(0);
@@ -497,10 +498,12 @@
             var tile = $(this.element)
                 .find("#tapestry-tile-" + i).eq(0);
             tile.attr("src", path);
-            
+
             window._requests.add(img);
         }
-
+        this.settings.callbacks.forEach(element => {
+            element(this);
+        });
         // Don't rotate linked views if this call is
         // from one of them otherwise it'll be an infinite
         // loop
@@ -511,6 +514,7 @@
                 this.linked_objs[i].render(imagesize, true);
             }
         }
+
     }
 
     /**
@@ -695,12 +699,7 @@
         }
         else if (operation == 'play')
         {
-            self = this;
-            this.timeseries_timer = setInterval(function(){
-                self.current_timestep = (self.current_timestep + 1) % (self.timerange[1] - self.timerange[0]);
-                self.render(0);
-                // self.render(self.is_drag + 0);
-            }, this.settings.animation_interval);
+            this.timeseries_timer = setInterval(() => this.animation_timer(), this.settings.animation_interval);
         }
         else if (operation == 'stop')
         {
@@ -716,6 +715,10 @@
             this.render(this.get_low_resolution());
         }
 
+    }
+    Tapestry.prototype.animation_timer = function() {
+        this.current_timestep = (this.current_timestep + 1) % (this.timerange[1] - this.timerange[0]);
+        this.render(0);
     }
 
     Tapestry.prototype.smooth_rotate = function(end_p)
