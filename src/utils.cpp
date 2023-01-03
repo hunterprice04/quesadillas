@@ -34,7 +34,6 @@ namespace ques {
         if (single_multi == rasty::CONFSTATE::SINGLE_NOVAR 
                 || single_multi == rasty::CONFSTATE::SINGLE_VAR)
         {
-            std::cout << "Creating new Raster from " << config->geoFilename << std::endl;
             dataset->raster = new rasty::Raster(config->geoFilename);
             dataset->raster->setElevationScale(config->elevationScale);
             dataset->raster->setHeightWidthScale(config->heightWidthScale);

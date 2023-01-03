@@ -61,6 +61,7 @@ namespace ques {
             void calculateTileRegion(int tile_index, int num_tiles,
                     int n_cols, std::vector<float> &region);
 
+            std::string getLogTime();
             std::shared_ptr<Pistache::Http::Endpoint> httpEndpoint;
             Rest::Router router;
             std::map<std::string, rasty_container> rasty_map;

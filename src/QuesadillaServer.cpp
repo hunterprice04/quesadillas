@@ -1,6 +1,6 @@
 #include "QuesadillaServer.h"
 #include "utils.h"
-
+#include "date.h"
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
+#include <chrono>
 
 #include "pistache/http.h"
 #include "pistache/router.h"
@@ -92,6 +93,7 @@ void QuesadillaServer::setupRoutes()
 void QuesadillaServer::serveFile(Pistache::Http::ResponseWriter &response,
         std::string filename) 
 {
+    std::cout << "INFO [" << this->getLogTime() << "] serveFile (" << filename << ")" << std::endl; 
     try
     {
         std::string app_path = this->app_dir + "/" + filename;
@@ -107,6 +109,8 @@ void QuesadillaServer::serveFile(Pistache::Http::ResponseWriter &response,
 void QuesadillaServer::handleRoot(const Rest::Request &request,
         Pistache::Http::ResponseWriter response) 
 {
+    std::cout << "INFO [" << this->getLogTime() << "] handleRoot" << std::endl; 
+
     std::string filename = "index.html"; // default root
     if (request.hasParam(":filename"))
     {
@@ -118,6 +122,7 @@ void QuesadillaServer::handleRoot(const Rest::Request &request,
 void QuesadillaServer::handleJS(const Rest::Request &request, 
         Pistache::Http::ResponseWriter response)
 {
+    std::cout << "INFO [" << this->getLogTime() << "] handleJS" << std::endl; 
     auto filename = request.param(":filename").as<std::string>();
     filename = "js/" + filename;
     serveFile(response, filename.c_str());
@@ -126,6 +131,7 @@ void QuesadillaServer::handleJS(const Rest::Request &request,
 void QuesadillaServer::handleCSS(const Rest::Request &request, 
         Pistache::Http::ResponseWriter response)
 {
+    std::cout << "INFO [" << this->getLogTime() << "] handleCSS" << std::endl; 
     auto filename = request.param(":filename").as<std::string>();
     filename = "css/" + filename;
     serveFile(response, filename.c_str());
@@ -134,6 +140,7 @@ void QuesadillaServer::handleCSS(const Rest::Request &request,
 void QuesadillaServer::handleExternalCommand(const Rest::Request &request, 
         Pistache::Http::ResponseWriter response) 
 {
+
     std::string program = request.param(":plugin").as<std::string>();
     std::string args = "";
 
@@ -143,6 +150,8 @@ void QuesadillaServer::handleExternalCommand(const Rest::Request &request,
     }
 
     std::string command = this->app_dir + "/plugins/" + program + " " + args;
+    std::cout << "INFO [" << this->getLogTime() << "] handleExternalCommand (" << command << ")" << std::endl; 
+
     std::string json_results = exec(command.c_str());
     response.send(Http::Code::Ok, json_results);
 }
@@ -158,6 +167,7 @@ void QuesadillaServer::handleVarList(const Rest::Request &request,
     // needed for preflight requests (CORS)
     if (request.method() == Pistache::Http::Method::Options)
     {
+        std::cout << "INFO [" << this->getLogTime() << "] handleVarList:OPTIONS" << std::endl; 
         response.headers().add<Pistache::Http::Header::AccessControlAllowOrigin>("*");
         response.headers().add<Pistache::Http::Header::AccessControlAllowMethods>("GET,OPTIONS");
         response.headers().add<Pistache::Http::Header::AccessControlAllowHeaders>("Access-Control-Allow-Origin, Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
@@ -171,8 +181,10 @@ void QuesadillaServer::handleVarList(const Rest::Request &request,
     {
         dataset = request.param(":dataset").as<std::string>();
     }
+    std::cout << "INFO [" << this->getLogTime() << "] handleVarList:GET (" << dataset << ")" << std::endl; 
     if (rasty_map.count(dataset) == 0)
     {
+        std::cout << "ERROR [" << this->getLogTime() << "] handleVarList:GET (Datset does not exist)" << std::endl; 
         response.send(Http::Code::Not_Found, "Datset does not exist");
         return;
     }
@@ -253,11 +265,13 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
             std::to_string(view_x) + "/" + std::to_string(view_y) + "/" + std::to_string(view_z) + "/"
             + std::to_string(imagesize) + "/"; 
     }
+    std::cout << "INFO [" << this->getLogTime() << "] handleImage (" << dataset << ")" << std::endl; 
 
     // Check if this dataset exists in the loaded datasets
     if (rasty_map.count(dataset) == 0)
     {
-        response.send(Http::Code::Not_Found, "Image does not exist");
+        std::cout << "ERROR [" << this->getLogTime() << "] handleImage (Datset does not exist)" << std::endl; 
+        response.send(Http::Code::Not_Found, "Datset does not exist");
         return;
     }
 
@@ -373,6 +387,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         // ensure variable exists and load its metadata
         auto it = temp_data->varmap.find(varname);
         if (it->second.isNull()) {
+            std::cout << "ERROR [" << this->getLogTime() << "] handleImage (Invalid Variable: " << varname << ")" << std::endl; 
             response.send(Http::Code::Not_Found, "Variable does not exist");
             return;
         }
@@ -386,7 +401,7 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         }
         else
         {
-            std::cerr<<"Invalid timestep: "<<timestep<<std::endl;
+            std::cout << "ERROR [" << this->getLogTime() << "] handleImage (Invalid Timestep: " << timestep << ")" << std::endl; 
         }
     }
 
@@ -413,12 +428,10 @@ void QuesadillaServer::handleImage(const Rest::Request &request,
         std::string encoded_image_data;
         if (format == "jpg")
         {
-            std::cout << "rendering to jpg" << std::endl;
             renderer->renderToJPGObject(image_data, 100);
         }
         else if (format == "png")
         {
-            std::cout << "rendering to png" << std::endl;
             renderer->renderToPNGObject(image_data);
         }
         encoded_image_data = std::string(image_data.begin(), image_data.end());
@@ -435,6 +448,7 @@ void QuesadillaServer::handleConfiguration(const Rest::Request &request,
         Pistache::Http::ResponseWriter response)
 {
     std::string config_name = request.param(":configname").as<std::string>();
+    std::cout << "INFO [" << this->getLogTime() << "] handleConfiguration (" << config_name << ")" << std::endl; 
     std::string encoded_json = request.body();
     std::string json_string = (encoded_json);
     rapidjson::Document json;
@@ -447,6 +461,7 @@ void QuesadillaServer::handleConfiguration(const Rest::Request &request,
 void QuesadillaServer::handleAppData(const Rest::Request &request, 
         Pistache::Http::ResponseWriter response)
 {
+    std::cout << "INFO [" << this->getLogTime() << "] handleAppData" << std::endl; 
     auto mime = Http::Mime::MediaType::fromString("video/mp4");
     response.headers()
         .add<Http::Header::ContentType>(mime);
@@ -472,6 +487,11 @@ void QuesadillaServer::calculateTileRegion(int tile_index, int num_tiles,
                            << region[2] << " "
                            << region[3] << std::endl;
     */
+}
+
+std::string QuesadillaServer::getLogTime(){
+    std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    return std::ctime(&now);
 }
 
 }
